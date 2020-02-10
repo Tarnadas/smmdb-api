@@ -37,18 +37,17 @@ RUN cd / && \
 WORKDIR /smmdb
 
 COPY ./Cargo.toml ./Cargo.toml
-COPY ./api/Cargo.toml ./api/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 RUN rm ./src/main.rs && \
-    mkdir -p ./api/src && \
-    echo "fn main() {}" >> ./api/src/main.rs
+    mkdir -p ./src && \
+    echo "fn main() {}" >> ./src/main.rs
 
 RUN cargo fetch
 RUN cargo build --release
-RUN rm api/src/*.rs
+RUN rm src/*.rs
 
-COPY ./api/src ./api/src
-COPY ./api/swagger ./api/swagger
+COPY ./src ./src
+COPY ./swagger ./swagger
 
 RUN rm ./target/release/deps/smmdb*
 RUN cargo build --release
