@@ -5,7 +5,7 @@ echo "using git hash $GIT_HASH"
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 docker pull tarnadas/smmdb-api-build
-docker build --cache-from=tarnadas/smmdb-api-build -f ./api/DockerfileBuild .
+docker build --cache-from=tarnadas/smmdb-api-build -f ./DockerfileBuild .
 docker push tarnadas/smmdb-api-build:latest
 docker tag tarnadas/smmdb-api-build tarnadas/smmdb-api-build:$GIT_HASH
 docker push tarnadas/smmdb-api-build:$GIT_HASH
