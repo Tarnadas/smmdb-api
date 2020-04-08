@@ -1,18 +1,25 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.2",
   "info": { "version": "v1", "title": "SMMDB" },
-  "schemes": ["https"],
   "paths": {
-    "/courses": {
+    "/courses2": {
       "get": {
-        "tags": ["CoursesApi"],
-        "summary": "Get course list",
+        "tags": ["Courses2Api"],
+        "summary": "Get course list for Super Mario Maker 2",
         "description": "Returns a list of course items.",
-        "produces": ["application/json"],
         "responses": {
           "200": {
-            "description": "Output assignment enabled",
-            "schema": { "$ref": "#/definitions/Smm1Course" }
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Smm2CourseResponse"
+                  }
+                }
+              }
+            }
           },
           "400": { "description": "Bad request" }
         },
@@ -20,67 +27,276 @@
       }
     }
   },
-  "definitions": {
-    "Smm1Course": {
-      "type": "object",
-      "required": [
-        "id",
-        "title",
-        "maker",
-        "owner",
-        "uploader",
-        "game_style",
-        "course_theme",
-        "course_theme_sub",
-        "auto_scroll",
-        "auto_scroll_sub",
-        "width",
-        "width_sub",
-        "lastmodified",
-        "uploaded"
-      ],
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "maker": { "type": "string" },
-        "owner": { "type": "string" },
-        "uploader": { "type": "string" },
-        "description": { "type": "string" },
-        "game_style": { "$ref": "#/definitions/Smm1Course_GameStyle" },
-        "course_theme": { "$ref": "#/definitions/Smm1Course_CourseTheme" },
-        "course_theme_sub": { "$ref": "#/definitions/Smm1Course_CourseTheme" },
-        "auto_scroll": { "$ref": "#/definitions/Smm1Course_AutoScroll" },
-        "auto_scroll_sub": { "$ref": "#/definitions/Smm1Course_AutoScroll" },
-        "width": { "type": "integer" },
-        "width_sub": { "type": "integer" },
-        "nintendoid": { "type": "string" },
-        "difficulty": { "type": "integer" },
-        "videoid": { "type": "string" },
-        "lastmodified": { "type": "string" },
-        "uploaded": { "type": "string" },
-        "v_full": { "type": "integer" },
-        "v_prev": { "type": "integer" },
-        "stars": { "type": "integer" }
+  "components": {
+    "schemas": {
+      "Smm1Course": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "maker",
+          "owner",
+          "uploader",
+          "game_style",
+          "course_theme",
+          "course_theme_sub",
+          "auto_scroll",
+          "auto_scroll_sub",
+          "width",
+          "width_sub",
+          "lastmodified",
+          "uploaded"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "maker": { "type": "string" },
+          "owner": { "type": "string" },
+          "uploader": { "type": "string" },
+          "description": { "type": "string" },
+          "game_style": { "$ref": "#/components/schemas/Smm1Course_GameStyle" },
+          "course_theme": {
+            "$ref": "#/components/schemas/Smm1Course_CourseTheme"
+          },
+          "course_theme_sub": {
+            "$ref": "#/components/schemas/Smm1Course_CourseTheme"
+          },
+          "auto_scroll": {
+            "$ref": "#/components/schemas/Smm1Course_AutoScroll"
+          },
+          "auto_scroll_sub": {
+            "$ref": "#/components/schemas/Smm1Course_AutoScroll"
+          },
+          "width": { "type": "integer" },
+          "width_sub": { "type": "integer" },
+          "nintendoid": { "type": "string" },
+          "difficulty": { "type": "integer" },
+          "videoid": { "type": "string" },
+          "lastmodified": { "type": "string" },
+          "uploaded": { "type": "string" },
+          "v_full": { "type": "integer" },
+          "v_prev": { "type": "integer" },
+          "stars": { "type": "integer" }
+        }
+      },
+      "Smm1Course_GameStyle": {
+        "type": "string",
+        "enum": ["M1", "M3", "MW", "WU"]
+      },
+      "Smm1Course_CourseTheme": {
+        "type": "string",
+        "enum": [
+          "GROUND",
+          "UNDERGROUND",
+          "CASTLE",
+          "AIRSHIP",
+          "UNDERWATER",
+          "GHOUST_HOUSE"
+        ]
+      },
+      "Smm1Course_AutoScroll": {
+        "type": "string",
+        "enum": ["DISABLED", "SLOW", "MEDIUM", "FAST", "LOCK"]
+      },
+      "Smm2CourseResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "owner",
+          "uploader",
+          "lastModified",
+          "uploaded",
+          "course"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "owner": { "type": "string" },
+          "uploader": { "type": "string" },
+          "difficulty": { "$ref": "#/components/schemas/Difficulty" },
+          "lastModified": { "type": "integer" },
+          "uploaded": { "type": "integer" },
+          "course": { "$ref": "#/components/schemas/Smm2Course" }
+        }
+      },
+      "Smm2Course": {
+        "type": "object",
+        "required": ["version", "header", "course_area", "course_sub_area"],
+        "properties": {
+          "version": { "type": "integer" },
+          "header": { "$ref": "#/components/schemas/Smm2Course_Header" },
+          "course_area": { "$ref": "#/components/schemas/Smm2CourseArea" },
+          "course_sub_area": { "$ref": "#/components/schemas/Smm2CourseArea" }
+        }
+      },
+      "Smm2Course_Header": {
+        "type": "object",
+        "required": [
+          "modified",
+          "title",
+          "description",
+          "start_y",
+          "finish_x",
+          "finish_y",
+          "time",
+          "game_style",
+          "clear_condition_type",
+          "clear_condition",
+          "clear_condition_amount",
+          "clear_check_tries",
+          "clear_check_time",
+          "game_version",
+          "management_flags",
+          "creation_id",
+          "upload_id",
+          "completion_flag"
+        ],
+        "properties": {
+          "modified": { "type": "integer" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "start_y": { "type": "integer" },
+          "finish_y": { "type": "integer" },
+          "finish_x": { "type": "integer" },
+          "time": { "type": "integer" },
+          "game_style": {
+            "$ref": "#/components/schemas/Smm2CourseHeaderGameStyle"
+          },
+          "clear_condition_type": {
+            "$ref": "#/components/schemas/Smm2CourseHeaderClearConditionType"
+          },
+          "clear_condition": { "type": "integer" },
+          "clear_condition_amount": { "type": "integer" },
+          "clear_check_tries": { "type": "integer" },
+          "clear_check_time": { "type": "integer" },
+          "game_version": { "type": "integer" },
+          "management_flags": { "type": "integer" },
+          "creation_id": { "type": "integer" },
+          "upload_id": { "type": "integer" },
+          "completion_flag": {
+            "$ref": "#/components/schemas/Smm2CourseHeaderCompletionFlag"
+          }
+        }
+      },
+      "Smm2CourseHeaderGameStyle": {
+        "type": "string",
+        "enum": ["M1", "M3", "MW", "WU", "W3"]
+      },
+      "Smm2CourseHeaderClearConditionType": {
+        "type": "string",
+        "enum": ["NONE", "PARTS", "STATUS", "ACTION"]
+      },
+      "Smm2CourseHeaderCompletionFlag": {
+        "type": "string",
+        "enum": ["NOT_CLEARED", "CLEARED", "UNKNOWN", "UNKNOWN0"]
+      },
+      "Smm2CourseArea": {
+        "type": "object",
+        "required": [
+          "course_theme",
+          "auto_scroll",
+          "screen_boundary",
+          "orientation",
+          "liquid_max",
+          "liquid_mode",
+          "liquid_speed",
+          "liquid_min",
+          "right_boundary",
+          "top_boundary",
+          "left_boundary",
+          "bottom_boundary",
+          "day_time",
+          "object_count",
+          "sound_effect_count",
+          "snake_block_count",
+          "clear_pipe_count",
+          "piranha_creeper_count",
+          "exclamation_block_count",
+          "track_block_count",
+          "tile_count",
+          "track_count",
+          "icicle_count"
+        ],
+        "properties": {
+          "course_theme": {
+            "$ref": "#/components/schemas/Smm2CourseAreaCourseTheme"
+          },
+          "auto_scroll": {
+            "$ref": "#/components/schemas/Smm2CourseAreaAutoScroll"
+          },
+          "screen_boundary": {
+            "$ref": "#/components/schemas/Smm2CourseAreaScreenBoundary"
+          },
+          "orientation": {
+            "$ref": "#/components/schemas/Smm2CourseAreaOrientation"
+          },
+          "liquid_max": { "type": "integer" },
+          "liquid_mode": {
+            "$ref": "#/components/schemas/Smm2CourseAreaLiquidMode"
+          },
+          "liquid_speed": {
+            "$ref": "#/components/schemas/Smm2CourseAreaLiquidSpeed"
+          },
+          "liquid_min": { "type": "integer" },
+          "right_boundary": { "type": "integer" },
+          "top_boundary": { "type": "integer" },
+          "left_boundary": { "type": "integer" },
+          "bottom_boundary": { "type": "integer" },
+          "day_time": { "$ref": "#/components/schemas/Smm2CourseAreaDayTime" },
+          "object_count": { "type": "integer" },
+          "sound_effect_count": { "type": "integer" },
+          "snake_block_count": { "type": "integer" },
+          "clear_pipe_count": { "type": "integer" },
+          "piranha_creeper_count": { "type": "integer" },
+          "exclamation_block_count": { "type": "integer" },
+          "track_block_count": { "type": "integer" },
+          "tile_count": { "type": "integer" },
+          "track_count": { "type": "integer" },
+          "icicle_count": { "type": "integer" }
+        }
+      },
+      "Smm2CourseAreaCourseTheme": {
+        "type": "string",
+        "enum": [
+          "GROUND",
+          "UNDERGROUND",
+          "CASTLE",
+          "AIRSHIP",
+          "UNDERWATER",
+          "GHOUST_HOUSE",
+          "SNOW",
+          "DESERT",
+          "SKY",
+          "FOREST"
+        ]
+      },
+      "Smm2CourseAreaAutoScroll": {
+        "type": "string",
+        "enum": ["NONE", "SLOW", "MEDIUM", "FAST", "CUSTOM"]
+      },
+      "Smm2CourseAreaScreenBoundary": {
+        "type": "string",
+        "enum": ["ABOVE_LINE", "UNDER_LINE"]
+      },
+      "Smm2CourseAreaOrientation": {
+        "type": "string",
+        "enum": ["HORIZONTAL", "VERTICAL"]
+      },
+      "Smm2CourseAreaLiquidMode": {
+        "type": "string",
+        "enum": ["FIXED", "ONE_WAY", "OSCILLATING"]
+      },
+      "Smm2CourseAreaLiquidSpeed": {
+        "type": "string",
+        "enum": ["NONE", "SLOW", "MEDIUM", "FAST"]
+      },
+      "Smm2CourseAreaDayTime": {
+        "type": "string",
+        "enum": ["DAY", "UNKNOWN0", "NIGHT", "UNKNOWN1"]
+      },
+      "Difficulty": {
+        "type": "string",
+        "enum": ["easy", "normal", "expert", "superexpert"]
       }
-    },
-    "Smm1Course_GameStyle": {
-      "type": "string",
-      "enum": ["M1", "M3", "MW", "WU"]
-    },
-    "Smm1Course_CourseTheme": {
-      "type": "string",
-      "enum": [
-        "GROUND",
-        "UNDERGROUND",
-        "CASTLE",
-        "AIRSHIP",
-        "UNDERWATER",
-        "GHOUST_HOUSE"
-      ]
-    },
-    "Smm1Course_AutoScroll": {
-      "type": "string",
-      "enum": ["DISABLED", "SLOW", "MEDIUM", "FAST", "LOCK"]
     }
   }
 }
