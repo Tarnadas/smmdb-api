@@ -1,0 +1,6 @@
+version: "3.6"
+services:
+  api:
+    image: tarnadas/smmdb-api
+    ports:
+      - "127.0.0.1:3030:3030"
