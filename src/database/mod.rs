@@ -34,8 +34,9 @@ impl Database {
             },
             Err(_) => "localhost",
         };
+        println!("Connecting to MongoDB at mongodb://{}:27017", host);
         let client = Client::with_uri(&format!("mongodb://{}:27017", host))
-            .expect("Failed to initialize standalone client.");
+            .expect("Failed to connect to MongoDB");
         let courses = client.db("admin").collection(Collections::Courses.as_str());
         let course_data = client
             .db("admin")

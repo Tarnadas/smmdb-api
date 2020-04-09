@@ -21,6 +21,7 @@ pub struct Server;
 
 impl Server {
     pub fn start(database: Arc<Database>) -> Result<ActixServer, io::Error> {
+        println!("Starting SMMDB API server");
         std::env::set_var("RUST_LOG", "actix_web=debug");
         env_logger::init();
         let data = Arc::new(Data::new(database));
