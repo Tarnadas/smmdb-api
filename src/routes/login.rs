@@ -85,6 +85,8 @@ async fn login_with_google(
         _ => {}
     };
     let id_info: IdInfo = response.json().await?;
+    dbg!(&data.google_client_id);
+    dbg!(&id_info.aud);
     if data.google_client_id != id_info.aud {
         Err(LoginError::ClientIdInvalid(id_info.aud).into())
     } else {
