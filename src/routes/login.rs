@@ -77,6 +77,13 @@ async fn login_with_google(
         .send();
     let mut response = request.await.map_err(|_| LoginError::Request)?;
 
+    // TODO handle bad status codes
+    match response.status() {
+        x if x.is_success() => {}
+        x if x.is_client_error() => {}
+        x if x.is_server_error() => {}
+        _ => {}
+    };
     let id_info: IdInfo = response.json().await?;
     if data.google_client_id != id_info.aud {
         Err(LoginError::ClientIdInvalid(id_info.aud).into())
@@ -101,7 +108,7 @@ async fn login_with_google(
 enum LoginError {
     #[fail(display = "Client Id invalid: {}", _0)]
     ClientIdInvalid(String),
-    #[fail(display = "Google OAuth unavailable")]
+    #[fail(display = "Google OAuth request failed")]
     Request,
     #[fail(display = "{}", _0)]
     JsonPayload(JsonPayloadError),
