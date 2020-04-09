@@ -4,6 +4,10 @@ GIT_HASH=$(git rev-parse HEAD)
 echo "using git hash $GIT_HASH"
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
+docker pull $(grep -ioP '(?<=^from)\s+\S+' Dockerfile) &
+docker pull $(grep -ioP '(?<=^from)\s+\S+' DockerfileBuild) &
+wait -n
+
 docker pull tarnadas/smmdb-api-build
 docker build --cache-from=tarnadas/smmdb-api-build -f ./DockerfileBuild .
 docker push tarnadas/smmdb-api-build:latest
