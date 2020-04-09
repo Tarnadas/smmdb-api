@@ -106,17 +106,17 @@ async fn login_with_google(
 
 #[derive(Fail, Debug)]
 enum LoginError {
-    #[fail(display = "Client Id invalid: {}", _0)]
+    #[fail(display = "[ClientIdInvalid]: {}", _0)]
     ClientIdInvalid(String),
     #[fail(display = "Google OAuth request failed")]
     Request,
-    #[fail(display = "{}", _0)]
+    #[fail(display = "[JsonPayload]: {}", _0)]
     JsonPayload(JsonPayloadError),
-    #[fail(display = "{}", _0)]
+    #[fail(display = "[SerdeJson]: {}", _0)]
     SerdeJson(serde_json::Error),
-    #[fail(display = "{}", _0)]
+    #[fail(display = "[AccountConvert]: {}", _0)]
     AccountConvert(AccountConvertError),
-    #[fail(display = "Mongodb error: {}", _0)]
+    #[fail(display = "[MongodbError]: {}", _0)]
     MongodbError(mongodb::error::Error),
 }
 
