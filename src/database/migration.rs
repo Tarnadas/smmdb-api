@@ -17,6 +17,8 @@ impl Migration {
             .unwrap()
             .map(|item| item.unwrap())
             .collect();
+        println!("Fixing missing apiKeys...");
+        let mut fixed_count = 0u16;
         for account in accounts {
             let apikey = account.get_str("apikey");
             if apikey.is_err() || apikey == Ok("") {
@@ -30,7 +32,9 @@ impl Migration {
                     }
                 };
                 coll.update_one(filter, update, None).unwrap();
+                fixed_count += 1;
             }
         }
+        println!("Fixed {} accounts", fixed_count);
     }
 }
