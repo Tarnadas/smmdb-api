@@ -51,3 +51,6 @@ COPY ./swagger ./swagger
 
 RUN rm ./target/release/deps/smmdb*
 RUN cargo build --release
+
+RUN mv /smmdb/target/release/smmdb /binary
+RUN rm -rf /smmdb
