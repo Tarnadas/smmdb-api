@@ -32,7 +32,7 @@ impl Database {
     pub fn new() -> Self {
         let host = match env::var("DOCKER") {
             Ok(val) => match val.as_ref() {
-                "true" | "1" => get_gateway_ip(),
+                "true" | "1" => "mongodb".to_string(), // get_gateway_ip(),
                 _ => "localhost".to_string(),
             },
             Err(_) => "localhost".to_string(),
