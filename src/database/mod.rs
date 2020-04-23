@@ -1,9 +1,12 @@
-use crate::account::{Account, AccountReq};
-use crate::collections::Collections;
-use crate::course::{Course, CourseResponse};
-use crate::course2::Course2;
-use crate::minhash::{LshIndex, MinHash};
-use crate::session::AuthSession;
+use crate::{
+    account::{Account, AccountReq},
+    collections::Collections,
+    config::get_gateway_ip,
+    course::{Course, CourseResponse},
+    course2::Course2,
+    minhash::{LshIndex, MinHash},
+    session::AuthSession,
+};
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use mongodb::{
@@ -29,10 +32,10 @@ impl Database {
     pub fn new() -> Self {
         let host = match env::var("DOCKER") {
             Ok(val) => match val.as_ref() {
-                "true" | "1" => "mongodb",
-                _ => "localhost",
+                "true" | "1" => get_gateway_ip(),
+                _ => "localhost".to_string(),
             },
-            Err(_) => "localhost",
+            Err(_) => "localhost".to_string(),
         };
         println!("Connecting to MongoDB at mongodb://{}:27017", host);
         let client = Client::with_uri(&format!("mongodb://{}:27017", host))

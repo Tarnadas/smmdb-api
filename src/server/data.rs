@@ -1,6 +1,6 @@
 use crate::{
     account::{Account, AccountReq},
-    config::get_google_client_id,
+    config::GOOGLE_CLIENT_ID,
     course2::{self, Course2, Course2Response, Course2SimilarityError},
     database::Database,
     minhash::{LshIndex, PermGen},
@@ -31,7 +31,7 @@ const SIMILARITY_THRESHOLD: f64 = 0.95;
 
 pub struct Data {
     database: Arc<Database>,
-    pub google_client_id: String,
+    pub google_client_id: &'static str,
     pub perm_gen: PermGen,
     pub lsh_index: Arc<Mutex<LshIndex>>,
 }
@@ -46,7 +46,7 @@ impl Data {
         println!("Filling LshIndex completed!");
         Data {
             database,
-            google_client_id: get_google_client_id(),
+            google_client_id: GOOGLE_CLIENT_ID,
             perm_gen: PermGen::new(128),
             lsh_index: Arc::new(Mutex::new(lsh_index)),
         }
