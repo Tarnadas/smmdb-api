@@ -20,7 +20,7 @@ pub async fn post_meta(
     let course_id = path.into_inner();
     let course_id = ObjectId::with_string(&course_id)?;
     let account = identity.get_account();
-    if !data.does_account_own_course(account.get_id(), course_id.clone()) {
+    if !data.does_account_own_course(account.get_id().clone(), course_id.clone()) {
         return Err(PostCourse2MetaError::Unauthorized);
     }
     let difficulty = meta.difficulty.clone();

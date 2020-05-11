@@ -13,7 +13,7 @@ pub async fn delete_course(
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
     let account = identity.get_account();
-    if !data.does_account_own_course(account.get_id(), course_oid.clone()) {
+    if !data.does_account_own_course(account.get_id().clone(), course_oid.clone()) {
         return Err(DeleteCourse2Error::Unauthorized.into());
     }
     data.delete_course2(course_id, course_oid)?;

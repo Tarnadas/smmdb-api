@@ -122,7 +122,10 @@ impl GetCourses {
             };
             match database.find_account(filter) {
                 Some(account) => {
-                    res.insert_bson("owner".to_string(), Bson::ObjectId(account.get_id()));
+                    res.insert_bson(
+                        "owner".to_string(),
+                        Bson::ObjectId(account.get_id().clone()),
+                    );
                 }
                 None => return Err(GetCoursesError::UploaderUnknown(uploader.clone())),
             };

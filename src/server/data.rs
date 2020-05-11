@@ -79,9 +79,7 @@ impl Data {
             .map(|course| {
                 let account = accounts
                     .iter()
-                    .find(|account| {
-                        account.get_id_ref().to_string() == course.get_owner().to_string()
-                    })
+                    .find(|account| account.get_id().to_string() == course.get_owner().to_string())
                     .unwrap();
                 Course2Response::from_course(course, account)
             })
@@ -201,7 +199,7 @@ impl Data {
             .map(
                 |smm_course| -> Result<Course2Response, courses2::PutCourses2Error> {
                     let mut course = Course2::insert(
-                        account.get_id_ref().clone(),
+                        account.get_id().clone(),
                         smm_course,
                         difficulty.clone(),
                         &self.perm_gen,
@@ -331,7 +329,7 @@ impl Data {
         match self.database.find_account(account.as_find()) {
             Some(account) => {
                 self.database
-                    .store_account_session(account.get_id_ref(), session)?;
+                    .store_account_session(account.get_id(), session)?;
                 Ok(account)
             }
             None => self.database.add_account(account, session),
@@ -339,7 +337,7 @@ impl Data {
     }
 
     pub fn delete_account_session(&self, account: Account) -> Result<(), mongodb::error::Error> {
-        self.database.delete_account_session(account.get_id_ref())
+        self.database.delete_account_session(account.get_id())
     }
 
     pub fn get_account_from_auth(&self, auth_req: AuthReq) -> Option<Account> {

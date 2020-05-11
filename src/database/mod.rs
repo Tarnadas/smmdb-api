@@ -118,7 +118,7 @@ impl Database {
                         let account = accounts
                             .iter()
                             .find(|account| {
-                                account.get_id_ref().to_string() == course.get_owner().to_string()
+                                account.get_id().to_string() == course.get_owner().to_string()
                             })
                             .unwrap();
                         CourseResponse::from_course(course, account)
@@ -317,7 +317,7 @@ impl Database {
     ) -> Result<Account, mongodb::error::Error> {
         let account_doc = account.clone().into_ordered_document();
         let res: InsertOneResult = self.accounts.insert_one(account_doc, None)?;
-        Ok(Account::new(
+        let account = Account::new(
             account,
             res.inserted_id
                 .ok_or_else(|| mongodb::Error::ResponseError("insert_id missing".to_string()))?
@@ -325,7 +325,17 @@ impl Database {
                 .unwrap()
                 .clone(),
             session,
-        ))
+        );
+        let filter = doc! {
+            "_id" => account.get_id()
+        };
+        let update = doc! {
+            "$set" => {
+                "apikey" => account.get_apikey()
+            }
+        };
+        self.accounts.update_one(filter, update, None)?;
+        Ok(account)
     }
 
     pub fn store_account_session(

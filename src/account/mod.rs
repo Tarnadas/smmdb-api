@@ -75,16 +75,16 @@ impl Account {
         }
     }
 
-    pub fn get_id(self) -> ObjectId {
-        self.id
-    }
-
-    pub fn get_id_ref(&self) -> &ObjectId {
+    pub fn get_id(&self) -> &ObjectId {
         &self.id
     }
 
     pub fn get_username(&self) -> &String {
         &self.username
+    }
+
+    pub fn get_apikey(&self) -> &String {
+        &self.apikey
     }
 
     pub fn is_expired(&self, expires_at: i64) -> bool {
