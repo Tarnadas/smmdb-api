@@ -20,7 +20,12 @@ use crate::{
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, spec::BinarySubtype, Bson};
 use compression::prelude::*;
-use image::{jpeg::JPEGEncoder, load_from_memory, DynamicImage, FilterType, ImageError};
+use image::{
+    error::{ImageError, ImageFormatHint, UnsupportedError, UnsupportedErrorKind},
+    imageops::FilterType,
+    jpeg::JPEGEncoder,
+    load_from_memory, DynamicImage,
+};
 use rayon::prelude::*;
 use std::{
     io::{self, Read},
@@ -165,8 +170,13 @@ impl Data {
                                 )?;
                                 Ok(res)
                             }
-                            _ => Err(image::ImageError::FormatError(
-                                "expected image rgb8".to_string(),
+                            _ => Err(ImageError::Unsupported(
+                                UnsupportedError::from_format_and_kind(
+                                    ImageFormatHint::Unknown,
+                                    UnsupportedErrorKind::GenericFeature(
+                                        "expected image rgb8".to_string(),
+                                    ),
+                                ),
                             )
                             .into()),
                         }
