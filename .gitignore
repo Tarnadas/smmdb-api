@@ -7,3 +7,4 @@
 *.dab
 /target
 **/*.rs.bk
+cargo-timing*
