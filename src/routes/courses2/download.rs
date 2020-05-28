@@ -18,22 +18,25 @@ pub async fn download_course(
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
     let (data, thumb) = data.get_course2(course_oid)?;
-    let data = data
-        .into_iter()
-        .decode(&mut GZipDecoder::new())
-        .collect::<Result<Vec<_>, _>>()?;
+    let data = cemu_smm::Course2::encrypt(
+        data.into_iter()
+            .decode(&mut GZipDecoder::new())
+            .collect::<Result<Vec<_>, _>>()?,
+    );
 
     let mut builder = Builder::new(vec![]);
 
     let mut header = Header::new_gnu();
     header.set_path("course_data_000.bcd").unwrap();
     header.set_size(data.len() as u64);
+    header.set_mode(0o644);
     header.set_cksum();
     builder.append(&header, &data[..])?;
 
     let mut header = Header::new_gnu();
     header.set_path("course_thumb_000.btl").unwrap();
     header.set_size(thumb.len() as u64);
+    header.set_mode(0o644);
     header.set_cksum();
     builder.append(&header, &thumb[..])?;
 

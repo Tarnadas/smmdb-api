@@ -14,7 +14,7 @@ actix-rt = "1"
 awc = "1"
 brotli2 = "0.3"
 bson ="0.14"
-cemu-smm = "4.0.25"
+cemu-smm = "4.0.26"
 compression = "0.1"
 chrono = "0.4"
 env_logger = "0.7"
@@ -39,5 +39,8 @@ features = ["actix"]
 [profile]
 [profile.release]
 debug = false
-lto = true
+# lto = true
 codegen-units = 1
+
+[profile.dev]
+opt-level = 1
