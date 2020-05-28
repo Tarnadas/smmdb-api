@@ -607,9 +607,9 @@ checksum = "404b1fe4f65288577753b17e3b36a04596ee784493ec249bf81c7f2d2acd751c"
 
 [[package]]
 name = "cemu-smm"
-version = "4.0.26"
+version = "4.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a267de094119c0636beafdfab3a0d5d31b509a30b835c334f52aa1220235780d"
+checksum = "48ded1ab7ffe4c7b7d836bc8b90bbec33006101ef07a0a48e542aa6d5bf17a06"
 dependencies = [
  "aes-soft",
  "block-modes",
@@ -617,7 +617,6 @@ dependencies = [
  "bytes 0.5.4",
  "cfg-if",
  "chrono",
- "console_error_panic_hook",
  "crc",
  "failure",
  "image",
@@ -663,16 +662,6 @@ name = "color_quant"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0dbbb57365263e881e805dc77d94697c9118fd94d8da011240555aa7b23445bd"
-
-[[package]]
-name = "console_error_panic_hook"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8d976903543e0c48546a91908f21588a680a8c8f984df9a5d69feccb2b2a211"
-dependencies = [
- "cfg-if",
- "wasm-bindgen",
-]
 
 [[package]]
 name = "constant_time_eq"
