@@ -6,7 +6,7 @@ use std::{
 pub static GOOGLE_CLIENT_ID: &str =
     "899493559187-bnvgqj1i8cnph7ilkl4h261836skee25.apps.googleusercontent.com";
 
-pub fn get_gateway_ip() -> String {
+pub fn _get_gateway_ip() -> String {
     let ip = match Command::new("ip")
         .args(&["route", "show", "default"])
         .stdout(Stdio::piped())

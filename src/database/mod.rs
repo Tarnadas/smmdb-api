@@ -1,7 +1,6 @@
 use crate::{
     account::{Account, AccountReq},
     collections::Collections,
-    config::get_gateway_ip,
     course::{Course, CourseResponse},
     course2::Course2,
     minhash::{LshIndex, MinHash},
@@ -16,8 +15,10 @@ use mongodb::{
 };
 use std::{convert::TryInto, env};
 
+mod error;
 mod migration;
 
+use error::*;
 use migration::*;
 
 pub struct Database {
@@ -148,6 +149,26 @@ impl Database {
         let accounts = self.get_accounts(account_ids);
 
         Ok((courses, accounts))
+    }
+
+    pub fn get_courses2_result(
+        &self,
+        query: Vec<OrderedDocument>,
+    ) -> Result<Vec<Result<Course2, DatabaseError>>, mongodb::error::Error> {
+        let cursor = self.courses2.aggregate(query, None)?;
+
+        let courses: Vec<Result<Course2, DatabaseError>> = cursor
+            .map(|item| -> Result<Course2, DatabaseError> {
+                let item = item?;
+                let course: Course2 = item
+                    .clone()
+                    .try_into()
+                    .map_err(|err| DatabaseError::Course2ConvertError(item, err))?;
+                Ok(course)
+            })
+            .collect();
+
+        Ok(courses)
     }
 
     pub fn fill_lsh_index(&self, lsh_index: &mut LshIndex) {
