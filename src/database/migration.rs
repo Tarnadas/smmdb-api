@@ -1,8 +1,9 @@
 use super::Database;
 
-use crate::{database::DatabaseError};
+use crate::database::DatabaseError;
 
 use bson::{ordered::OrderedDocument, Bson};
+use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
@@ -64,7 +65,7 @@ impl Migration {
     }
 
     fn fix_course2(database: &Database, course_id: &Bson) -> Result<(), mongodb::error::Error> {
-        use compression::prelude::*;
+        use std::io::prelude::*;
 
         let doc = database
             .course2_data
@@ -77,11 +78,10 @@ impl Migration {
             .unwrap();
         let bson = doc.get("data_gz").unwrap();
         if let Bson::Binary(_, data) = bson {
-            let course_data = data
-                .clone()
-                .decode(&mut GZipDecoder::new())
-                .collect::<Result<Vec<u8>, _>>()
-                .unwrap();
+            let mut gz = GzDecoder::new(&data[..]);
+            let mut course_data = vec![];
+            gz.read_to_end(&mut course_data)?;
+
             let course =
                 cemu_smm::Course2::from_switch_files(&course_data[..], None, false).unwrap();
             let course_meta = serde_json::to_value(course.get_course()).unwrap();

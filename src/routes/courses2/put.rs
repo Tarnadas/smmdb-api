@@ -4,8 +4,6 @@ use crate::{
     Identity,
 };
 
-use cemu_smm::errors::DecompressionError;
-
 use actix_web::{
     error::{PayloadError, ResponseError},
     http::StatusCode,
@@ -13,6 +11,7 @@ use actix_web::{
     web::{self},
     HttpRequest, HttpResponse,
 };
+use cemu_smm::errors::DecompressionError;
 use futures::{self, StreamExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
@@ -64,8 +63,6 @@ pub enum PutCourses2Error {
     ThumbnailMissing,
     #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
     Mongo(mongodb::error::Error),
-    #[fail(display = "[PutCourses2Error::Compression]: {}", _0)]
-    Compression(compression::prelude::CompressionError),
 }
 
 impl From<io::Error> for PutCourses2Error {
@@ -98,12 +95,6 @@ impl From<mongodb::error::Error> for PutCourses2Error {
     }
 }
 
-impl From<compression::prelude::CompressionError> for PutCourses2Error {
-    fn from(err: compression::prelude::CompressionError) -> Self {
-        PutCourses2Error::Compression(err)
-    }
-}
-
 impl ResponseError for PutCourses2Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
@@ -114,9 +105,6 @@ impl ResponseError for PutCourses2Error {
             PutCourses2Error::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::ThumbnailMissing => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
-            PutCourses2Error::Compression(_) => {
-                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            }
         }
     }
 }

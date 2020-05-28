@@ -3,10 +3,10 @@ use crate::server::ServerData;
 use actix_http::http::header;
 use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpResponse};
 use bson::{oid::ObjectId, ValueAccessError};
-use compression::prelude::*;
+use flate2::read::GzDecoder;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
-use std::io;
+use std::io::{self, prelude::*};
 use tar::{Builder, Header};
 
 #[get("download/{course_id}")]
@@ -18,11 +18,11 @@ pub async fn download_course(
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
     let (data, thumb) = data.get_course2(course_oid)?;
-    let data = cemu_smm::Course2::encrypt(
-        data.into_iter()
-            .decode(&mut GZipDecoder::new())
-            .collect::<Result<Vec<_>, _>>()?,
-    );
+
+    let mut gz = GzDecoder::new(&data[..]);
+    let mut data = vec![];
+    gz.read_to_end(&mut data)?;
+    let data = cemu_smm::Course2::encrypt(data);
 
     let mut builder = Builder::new(vec![]);
 
@@ -87,8 +87,6 @@ pub enum DownloadCourse2Error {
     Mongo(mongodb::error::Error),
     #[fail(display = "[DownloadCourse2Error::ValueAccessError]: {}", _0)]
     ValueAccessError(ValueAccessError),
-    #[fail(display = "[DownloadCourse2Error::CompressionError]: {}", _0)]
-    Compression(CompressionError),
 }
 
 impl From<io::Error> for DownloadCourse2Error {
@@ -115,12 +113,6 @@ impl From<ValueAccessError> for DownloadCourse2Error {
     }
 }
 
-impl From<CompressionError> for DownloadCourse2Error {
-    fn from(err: CompressionError) -> Self {
-        DownloadCourse2Error::Compression(err)
-    }
-}
-
 impl ResponseError for DownloadCourse2Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
@@ -136,9 +128,6 @@ impl ResponseError for DownloadCourse2Error {
             }
             DownloadCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             DownloadCourse2Error::ValueAccessError(_) => {
-                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-            DownloadCourse2Error::Compression(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
         }

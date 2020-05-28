@@ -19,7 +19,7 @@ use crate::{
 
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, spec::BinarySubtype, Bson};
-use compression::prelude::*;
+use flate2::{read::GzEncoder, Compression};
 use image::{
     error::{ImageError, ImageFormatHint, UnsupportedError, UnsupportedErrorKind},
     imageops::FilterType,
@@ -206,12 +206,10 @@ impl Data {
                     );
                     let course_meta = serde_json::to_value(&course)?;
 
-                    let data_gz = smm_course
-                        .get_course_data()
-                        .iter()
-                        .cloned()
-                        .encode(&mut GZipEncoder::new(), Action::Finish)
-                        .collect::<Result<Vec<_>, _>>()?;
+                    let mut gz =
+                        GzEncoder::new(&smm_course.get_course_data()[..], Compression::best());
+                    let mut data_gz = vec![];
+                    gz.read_to_end(&mut data_gz)?;
                     let data_gz = Bson::Binary(BinarySubtype::Generic, data_gz);
 
                     let mut data_br = vec![];
