@@ -28,6 +28,10 @@ pub struct GetCourses2 {
     id: Option<String>,
     ids: Option<Vec<String>>,
     title: Option<String>,
+    #[serde(default)]
+    title_exact: bool,
+    #[serde(default)]
+    title_case_sensitive: bool,
     owner: Option<String>,
     uploader: Option<String>,
     sort: Option<Vec<Sort>>,
@@ -86,7 +90,13 @@ impl GetCourses2 {
         }
 
         if let Some(title) = self.title.clone() {
-            GetCourses2::insert_regexp(&mut res, "course.header.title".to_string(), title);
+            GetCourses2::insert_str_match(
+                &mut res,
+                "course.header.title".to_string(),
+                title,
+                self.title_exact,
+                self.title_case_sensitive,
+            );
         }
 
         if let Some(owner) = &self.owner {
@@ -153,11 +163,24 @@ impl GetCourses2 {
         self.limit.0 + self.skip.unwrap_or_default()
     }
 
-    fn insert_regexp(doc: &mut OrderedDocument, key: String, regexp: String) {
-        doc.insert_bson(
-            key,
-            Bson::RegExp(format!(".*{}.*", regexp), "i".to_string()),
-        );
+    fn insert_str_match(
+        doc: &mut OrderedDocument,
+        key: String,
+        val: String,
+        exact: bool,
+        case_sensitive: bool,
+    ) {
+        let matched_str = if exact {
+            format!("^{}$", val)
+        } else {
+            format!(".*{}.*", val)
+        };
+        let options_str = if case_sensitive {
+            "".to_string()
+        } else {
+            "i".to_string()
+        };
+        doc.insert_bson(key, Bson::RegExp(matched_str, options_str));
     }
 
     fn insert_objectid(
@@ -290,7 +313,7 @@ impl ResponseError for GetCourses2Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
             GetCourses2Error::DeserializeError(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            GetCourses2Error::UploaderUnknown(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            GetCourses2Error::UploaderUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             GetCourses2Error::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             GetCourses2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
         }
