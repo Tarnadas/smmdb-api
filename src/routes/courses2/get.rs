@@ -171,9 +171,9 @@ impl GetCourses2 {
         case_sensitive: bool,
     ) {
         let matched_str = if exact {
-            format!("^{}$", val)
+            format!("^{}$", regex::escape(&val))
         } else {
-            format!(".*{}.*", val)
+            format!(".*{}.*", regex::escape(&val))
         };
         let options_str = if case_sensitive {
             "".to_string()
