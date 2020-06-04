@@ -4,6 +4,7 @@ use crate::{
     Identity,
 };
 
+use actix_http::body::Body;
 use actix_web::{
     error::{PayloadError, ResponseError},
     http::StatusCode,
@@ -97,7 +98,7 @@ impl From<mongodb::error::Error> for PutCourses2Error {
 
 impl ResponseError for PutCourses2Error {
     fn error_response(&self) -> HttpResponse {
-        match *self {
+        let res = match *self {
             PutCourses2Error::IoError(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             PutCourses2Error::Similarity(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Payload(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
@@ -105,7 +106,8 @@ impl ResponseError for PutCourses2Error {
             PutCourses2Error::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::ThumbnailMissing => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
-        }
+        };
+        res.set_body(Body::from(format!("{}", self)))
     }
 }
 
