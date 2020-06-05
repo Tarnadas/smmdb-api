@@ -20,6 +20,10 @@ pub async fn get_courses(
     data.get_courses2(query.into_inner())
 }
 
+fn is_true() -> bool {
+    true
+}
+
 #[derive(Deserialize, Debug)]
 pub struct GetCourses2 {
     #[serde(default)]
@@ -32,6 +36,8 @@ pub struct GetCourses2 {
     title_exact: bool,
     #[serde(default)]
     title_case_sensitive: bool,
+    #[serde(default = "is_true")]
+    title_trimmed: bool,
     owner: Option<String>,
     uploader: Option<String>,
     sort: Option<Vec<Sort>>,
@@ -96,6 +102,7 @@ impl GetCourses2 {
                 title,
                 self.title_exact,
                 self.title_case_sensitive,
+                self.title_trimmed,
             );
         }
 
@@ -169,9 +176,14 @@ impl GetCourses2 {
         val: String,
         exact: bool,
         case_sensitive: bool,
+        trimmed: bool,
     ) {
         let matched_str = if exact {
-            format!("^{}$", regex::escape(&val))
+            if trimmed {
+                format!("^ *{} *$", regex::escape(&val))
+            } else {
+                format!("^{}$", regex::escape(&val))
+            }
         } else {
             format!(".*{}.*", regex::escape(&val))
         };
