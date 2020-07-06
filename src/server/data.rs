@@ -308,10 +308,10 @@ impl Data {
             unset.insert("difficulty", "");
         }
         let mut update = doc! {};
-        if set.is_empty() {
+        if !set.is_empty() {
             update.insert("$set", set);
         }
-        if unset.is_empty() {
+        if !unset.is_empty() {
             update.insert("$unset", unset);
         }
         Ok(self

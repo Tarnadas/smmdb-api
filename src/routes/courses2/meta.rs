@@ -1,5 +1,6 @@
 use crate::{course2::Difficulty, server::ServerData, Identity};
 
+use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, post, web, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
 use serde::Deserialize;
@@ -30,22 +31,16 @@ pub async fn post_meta(
 
 #[derive(Debug, Fail)]
 pub enum PostCourse2MetaError {
-    #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
-    SerdeJson(serde_json::Error),
     #[fail(display = "Object id invalid.\nReason: {}", _0)]
     MongoOid(bson::oid::Error),
     #[fail(display = "Course with ID {} not found", _0)]
     ObjectIdUnknown(String),
-    #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
+    #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
     Mongo(mongodb::error::Error),
+    #[fail(display = "[PutCourses2Error::MongoCollWriteException]: {}", _0)]
+    MongoColl(mongodb::coll::error::WriteException),
     #[fail(display = "")]
     Unauthorized,
-}
-
-impl From<serde_json::Error> for PostCourse2MetaError {
-    fn from(err: serde_json::Error) -> Self {
-        PostCourse2MetaError::SerdeJson(err)
-    }
 }
 
 impl From<bson::oid::Error> for PostCourse2MetaError {
@@ -63,10 +58,15 @@ impl From<mongodb::error::Error> for PostCourse2MetaError {
     }
 }
 
+impl From<mongodb::coll::error::WriteException> for PostCourse2MetaError {
+    fn from(err: mongodb::coll::error::WriteException) -> Self {
+        PostCourse2MetaError::MongoColl(err)
+    }
+}
+
 impl ResponseError for PostCourse2MetaError {
     fn error_response(&self) -> HttpResponse {
-        match *self {
-            PostCourse2MetaError::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+        let res = match *self {
             PostCourse2MetaError::MongoOid(bson::oid::Error::FromHexError(_)) => {
                 HttpResponse::new(StatusCode::BAD_REQUEST)
             }
@@ -74,8 +74,12 @@ impl ResponseError for PostCourse2MetaError {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
             PostCourse2MetaError::ObjectIdUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
-            PostCourse2MetaError::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+            PostCourse2MetaError::Mongo(_) => HttpResponse::new(StatusCode::NOT_FOUND),
+            PostCourse2MetaError::MongoColl(_) => {
+                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            }
             PostCourse2MetaError::Unauthorized => HttpResponse::new(StatusCode::UNAUTHORIZED),
-        }
+        };
+        res.set_body(Body::from(format!("{}", self)))
     }
 }

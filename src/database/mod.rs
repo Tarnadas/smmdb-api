@@ -4,6 +4,7 @@ use crate::{
     course::{Course, CourseResponse},
     course2::Course2,
     minhash::{LshIndex, MinHash},
+    routes::courses2::meta::PostCourse2MetaError,
     session::AuthSession,
 };
 
@@ -285,12 +286,16 @@ impl Database {
         course_id: String,
         filter: OrderedDocument,
         update: OrderedDocument,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), PostCourse2MetaError> {
         let res = self.courses2.update_one(filter, update, None)?;
-        if res.matched_count == 0 {
-            Err(mongodb::Error::ArgumentError(course_id))
+        if let Some(write_exception) = res.write_exception {
+            Err(write_exception.into())
         } else {
-            Ok(())
+            if res.matched_count == 0 {
+                Err(mongodb::Error::ArgumentError(course_id).into())
+            } else {
+                Ok(())
+            }
         }
     }
 
