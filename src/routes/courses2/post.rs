@@ -1,6 +1,6 @@
 use crate::server::ServerData;
 
-use cemu_smm::{course2::Course2, errors::DecompressionError, proto::SMM2Course::SMM2Course};
+use smmdb_lib::{course2::Course2, errors::DecompressionError, proto::SMM2Course::SMM2Course};
 
 use actix_web::{
     error::{PayloadError, ResponseError},

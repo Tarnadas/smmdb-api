@@ -1,6 +1,6 @@
 use super::Course;
 use crate::account::Account;
-use cemu_smm::proto::SMMCourse::{
+use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
 use serde::{Deserialize, Serialize};

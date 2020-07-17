@@ -3,7 +3,7 @@ mod response;
 pub use self::response::CourseResponse;
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, ValueAccessError};
-use cemu_smm::proto::SMMCourse::{
+use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
 use serde::Serialize;

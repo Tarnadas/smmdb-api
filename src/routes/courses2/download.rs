@@ -22,7 +22,7 @@ pub async fn download_course(
     let mut gz = GzDecoder::new(&data[..]);
     let mut data = vec![];
     gz.read_to_end(&mut data)?;
-    let data = cemu_smm::Course2::encrypt(data);
+    let data = smmdb_lib::Course2::encrypt(data);
 
     let mut builder = Builder::new(vec![]);
 

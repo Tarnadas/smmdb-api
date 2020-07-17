@@ -3,7 +3,7 @@ use crate::Database;
 
 use actix_web::{dev, error::ResponseError, get, http::StatusCode, web, HttpRequest, HttpResponse};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
-use cemu_smm::proto::SMMCourse::{
+use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
 use protobuf::ProtobufEnum;

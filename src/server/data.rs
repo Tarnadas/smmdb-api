@@ -188,7 +188,7 @@ impl Data {
 
     pub fn put_courses2(
         &self,
-        mut courses: Vec<cemu_smm::Course2>,
+        mut courses: Vec<smmdb_lib::Course2>,
         account: &Account,
         difficulty: Option<course2::Difficulty>,
     ) -> Result<PutCourses2Response, courses2::PutCourses2Error> {

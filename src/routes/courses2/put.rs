@@ -12,7 +12,7 @@ use actix_web::{
     web::{self},
     HttpRequest, HttpResponse,
 };
-use cemu_smm::errors::DecompressionError;
+use smmdb_lib::errors::DecompressionError;
 use futures::{self, StreamExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
@@ -36,7 +36,7 @@ pub async fn put_courses(
     while let Some(item) = payload.next().await {
         bytes.extend_from_slice(&item?);
     }
-    match cemu_smm::Course2::from_packed(&bytes[..]) {
+    match smmdb_lib::Course2::from_packed(&bytes[..]) {
         Ok(courses) => {
             let account = identity.get_account();
             match data.put_courses2(courses, &account, query.difficulty) {

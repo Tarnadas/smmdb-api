@@ -1,7 +1,7 @@
 use super::{Course2, Difficulty};
 use crate::account::Account;
 
-use cemu_smm::proto::SMM2Course::SMM2Course;
+use smmdb_lib::proto::SMM2Course::SMM2Course;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]

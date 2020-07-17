@@ -5,7 +5,7 @@ pub use self::response::Course2Response;
 use crate::minhash::{MinHash, PermGen};
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
-use cemu_smm::proto::SMM2Course::SMM2Course;
+use smmdb_lib::proto::SMM2Course::SMM2Course;
 use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt};
@@ -36,7 +36,7 @@ impl TryFrom<OrderedDocument> for Course2 {
 impl Course2 {
     pub fn insert(
         owner: ObjectId,
-        course: &cemu_smm::Course2,
+        course: &smmdb_lib::Course2,
         difficulty: Option<Difficulty>,
         perm_gen: &PermGen,
     ) -> Self {
