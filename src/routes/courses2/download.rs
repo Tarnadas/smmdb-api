@@ -23,6 +23,7 @@ pub async fn download_course(
     let mut data = vec![];
     gz.read_to_end(&mut data)?;
     let data = smmdb_lib::Course2::encrypt(data);
+    let thumb = smmdb_lib::Thumbnail2::encrypt(thumb);
 
     let mut builder = Builder::new(vec![]);
 
