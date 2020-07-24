@@ -648,6 +648,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmac"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9f8f8ba8b9640e29213f152015694e78208e601adf91c72b698460633b15715"
+dependencies = [
+ "block-cipher",
+ "crypto-mac 0.8.0",
+ "dbl",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -742,10 +753,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-mac"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
+dependencies = [
+ "generic-array 0.14.3",
+ "subtle",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72aa14c04dfae8dd7d8a2b1cb7ca2152618cd01336dbfe704b8dcbf8d41dbd69"
+
+[[package]]
+name = "dbl"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2735145c3b9ba15f2d7a3ae8cdafcbc8c98a7bef7f62afe9d08bd99fbf7130de"
+dependencies = [
+ "generic-array 0.14.3",
+]
 
 [[package]]
 name = "deflate"
@@ -1138,7 +1168,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "733e1b3ac906631ca01ebb577e9bb0f5e37a454032b9036b5eaea4013ed6f99a"
 dependencies = [
- "crypto-mac",
+ "crypto-mac 0.6.2",
  "digest",
 ]
 
@@ -1648,7 +1678,7 @@ dependencies = [
  "base64 0.9.3",
  "byteorder",
  "constant_time_eq",
- "crypto-mac",
+ "crypto-mac 0.6.2",
  "generic-array 0.9.0",
  "hmac",
  "rand 0.5.6",
@@ -2357,23 +2387,25 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "smmdb 1.0.1",
+ "smmdb 1.0.2",
  "tar",
  "twox-hash",
 ]
 
 [[package]]
 name = "smmdb"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a7c920d8e7fcd6665039381cb1448f9c940b1a77d93a0f8a1ea3c01c720ebf6"
+checksum = "29d4d7dd4110b6c7b0e4003a52ee0268ffa3092435f727cad311c450ce111b32"
 dependencies = [
  "aes-soft",
+ "arrayref",
  "block-modes",
  "byteorder",
  "bytes 0.5.6",
  "cfg-if",
  "chrono",
+ "cmac",
  "crc",
  "failure",
  "image",
@@ -2381,6 +2413,7 @@ dependencies = [
  "itertools",
  "protobuf",
  "protobuf-codegen-pure",
+ "rand 0.7.3",
  "regex 1.3.9",
  "serde",
  "serde_derive",
@@ -2405,6 +2438,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "subtle"
+version = "2.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "502d53007c02d7605a05df1c1a73ee436952781653da5d0bf57ad608f66932c1"
 
 [[package]]
 name = "syn"
@@ -2773,9 +2812,9 @@ dependencies = [
 
 [[package]]
 name = "tracing"
-version = "0.1.16"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2e2a2de6b0d5cbb13fc21193a2296888eaab62b6044479aafb3c54c01c29fcd"
+checksum = "dbdf4ccd1652592b01286a5dbe1e2a77d78afaa34beadd9872a5f7396f92aaa9"
 dependencies = [
  "cfg-if",
  "log",
