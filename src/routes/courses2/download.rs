@@ -42,10 +42,10 @@ pub async fn download_course(
     builder.append(&header, &thumb[..])?;
 
     Ok(HttpResponse::Ok()
-        .content_type("application/tar+gzip")
+        .content_type("application/x-tar")
         .set_header(
             header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}.tar.gz\"", course_id),
+            format!("attachment; filename=\"{}.tar\"", course_id),
         )
         .body(builder.into_inner()?))
 }
@@ -59,19 +59,19 @@ pub struct DownloadCourse2 {
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
-    TGZ,
+    TAR,
 }
 
 impl Default for Format {
     fn default() -> Self {
-        Format::TGZ
+        Format::TAR
     }
 }
 
 impl Into<String> for Format {
     fn into(self) -> String {
         match self {
-            Format::TGZ => "tgz".to_string(),
+            Format::TAR => "tar".to_string(),
         }
     }
 }
