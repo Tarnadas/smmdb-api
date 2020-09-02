@@ -319,9 +319,9 @@ checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "aes-soft"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4925647ee64e5056cf231608957ce7c81e12d6d6e316b9ce1404778cc1d35fa7"
+checksum = "63dd91889c49327ad7ef3b500fd1109dbd3c509a03db0d4a9ce413b79f575cb6"
 dependencies = [
  "block-cipher",
  "byteorder",
@@ -467,23 +467,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a076c298b9ecdb530ed9d967e74a6027d6a7478924520acddcddc24c1c8ab3ab"
 dependencies = [
  "arrayref",
- "byte-tools 0.2.0",
+ "byte-tools",
 ]
 
 [[package]]
 name = "block-cipher"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa136449e765dc7faa244561ccae839c394048667929af599b5d931ebe7b7f10"
+checksum = "f337a3e6da609650eb74e02bc9fac7b735049f7623ab12f2e4c719316fcc7e80"
 dependencies = [
  "generic-array 0.14.4",
 ]
 
 [[package]]
 name = "block-modes"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc7143fa8aadf0a3d8140f3f558063dcfc1b3205e5e837ad59485140f1575ae8"
+checksum = "0c9b14fd8a4739e6548d4b6018696cf991dcf8c6effd9ef9eb33b29b8a650972"
 dependencies = [
  "block-cipher",
  "block-padding",
@@ -491,12 +491,9 @@ dependencies = [
 
 [[package]]
 name = "block-padding"
-version = "0.1.5"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa79dedbb091f449f1f39e53edf88d5dbe95f895dae6135a8d7b881fb5af73f5"
-dependencies = [
- "byte-tools 0.3.1",
-]
+checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "brotli-sys"
@@ -559,12 +556,6 @@ name = "byte-tools"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "560c32574a12a89ecd91f5e742165893f86e3ab98d21f8ea548658eb9eef5f40"
-
-[[package]]
-name = "byte-tools"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 
 [[package]]
 name = "bytemuck"
@@ -649,12 +640,11 @@ dependencies = [
 
 [[package]]
 name = "cmac"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a681d7c344a6fbe3dcd1565e76dac74eed379c8a9326b29654ae34a718d16a49"
+checksum = "5220604fe5c112e2851b00da795c72cbb71bf112f2cbd532bdcfb4106eeb320b"
 dependencies = [
- "block-cipher",
- "crypto-mac 0.8.0",
+ "crypto-mac 0.9.1",
  "dbl",
 ]
 
@@ -764,10 +754,11 @@ dependencies = [
 
 [[package]]
 name = "crypto-mac"
-version = "0.8.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
+checksum = "58bcd97a54c7ca5ce2f6eb16f6bede5b0ab5f0055fedc17d2f0b4466e21671ca"
 dependencies = [
+ "block-cipher",
  "generic-array 0.14.4",
  "subtle",
 ]
@@ -1416,7 +1407,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9402eaae33a9e144ce18ef488a0e4ca19869673c7bcdbbfe2030fdc3f84211cd"
 dependencies = [
  "block-buffer",
- "byte-tools 0.2.0",
+ "byte-tools",
  "digest",
 ]
 
@@ -1613,9 +1604,9 @@ checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
 
 [[package]]
 name = "opaque-debug"
-version = "0.2.3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
+checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "parking_lot"
@@ -2305,7 +2296,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51b9d1f3b5de8a167ab06834a7c883bd197f2191e1dda1a22d9ccfeedbf9aded"
 dependencies = [
  "block-buffer",
- "byte-tools 0.2.0",
+ "byte-tools",
  "digest",
  "fake-simd",
 ]
@@ -2323,7 +2314,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9eb6be24e4c23a84d7184280d2722f7f2731fcdd4a9d886efbfe4413e4847ea0"
 dependencies = [
  "block-buffer",
- "byte-tools 0.2.0",
+ "byte-tools",
  "digest",
  "fake-simd",
 ]
@@ -2388,16 +2379,16 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "smmdb 1.0.2",
+ "smmdb 1.1.0",
  "tar",
  "twox-hash",
 ]
 
 [[package]]
 name = "smmdb"
-version = "1.0.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29d4d7dd4110b6c7b0e4003a52ee0268ffa3092435f727cad311c450ce111b32"
+checksum = "25d66037be9805ee1f62385d5f725ccc427427b3e30c30615cee10ff1131af5f"
 dependencies = [
  "aes-soft",
  "arrayref",
@@ -2408,7 +2399,6 @@ dependencies = [
  "chrono",
  "cmac",
  "crc",
- "failure",
  "image",
  "infer",
  "itertools",
@@ -2418,6 +2408,8 @@ dependencies = [
  "regex 1.3.9",
  "serde",
  "serde_derive",
+ "tar",
+ "thiserror",
  "typenum",
  "zip",
 ]
