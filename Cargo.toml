@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 actix-cors = "0.2"
-actix-http = { version = "1.0", features = [ "rustls" ] }
-actix-service = "1.0"
+actix-http = { version = "1", features = [ "rustls" ] }
+actix-service = "1"
 actix-session = "0.3"
 actix-web = "2"
 actix-rt = "1"
@@ -17,25 +17,22 @@ bson = "0.14"
 chrono = "0.4"
 env_logger = "0.7"
 failure = "0.1"
-flate2 = "1.0"
+flate2 = "1"
 futures = "0.3"
 image = "0.23"
 itertools = "0.9"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
-num_cpus = "1.13"
-protobuf = "2.16"
+num_cpus = "1"
+protobuf = "2"
 rand = "0.7"
-rayon = "1.3"
+rayon = "1"
 regex = "1"
 serde = "1"
 serde_json = "1"
-smmdb-lib = { version = "1.0", package = "smmdb" }
+serde_qs = { version = "0.7", features = ["actix"] }
+smmdb-lib = { version = "1", package = "smmdb" }
 tar = "0.4"
-twox-hash = "1.5"
-
-[dependencies.serde_qs]
-git = "https://github.com/Tarnadas/serde_qs"
-features = ["actix"]
+twox-hash = "1"
 
 [profile]
 [profile.release]

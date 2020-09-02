@@ -23,7 +23,7 @@ use flate2::{read::GzEncoder, Compression};
 use image::{
     error::{ImageError, ImageFormatHint, UnsupportedError, UnsupportedErrorKind},
     imageops::FilterType,
-    jpeg::JPEGEncoder,
+    jpeg::JpegEncoder,
     load_from_memory, DynamicImage,
 };
 use rayon::prelude::*;
@@ -157,7 +157,7 @@ impl Data {
                             DynamicImage::ImageRgb8(buffer) => {
                                 let (width, height) = buffer.dimensions();
                                 let mut res = vec![];
-                                let mut encoder = JPEGEncoder::new_with_quality(&mut res, 85);
+                                let mut encoder = JpegEncoder::new_with_quality(&mut res, 85);
                                 encoder
                                     .encode(&buffer.into_raw()[..], width, height, color)
                                     .map_err(ImageError::from)?;
