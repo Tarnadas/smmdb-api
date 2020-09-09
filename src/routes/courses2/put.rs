@@ -12,7 +12,6 @@ use actix_web::{
     web::{self},
     HttpRequest, HttpResponse,
 };
-use smmdb_lib::errors::DecompressionError;
 use futures::{self, StreamExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
@@ -56,8 +55,8 @@ pub enum PutCourses2Error {
     IoError(io::Error),
     #[fail(display = "[PutCourses2Error::Payload]: {}", _0)]
     Payload(PayloadError),
-    #[fail(display = "[PutCourses2Error::Decompression]: {}", _0)]
-    Decompression(DecompressionError),
+    #[fail(display = "[PutCourses2Error::Smmdb]: {}", _0)]
+    Smmdb(smmdb_lib::Error),
     #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
     SerdeJson(serde_json::Error),
     #[fail(display = "[PutCourses2Error::ThumbnailMissing]: course is missing thumbnail")]
@@ -78,9 +77,9 @@ impl From<PayloadError> for PutCourses2Error {
     }
 }
 
-impl From<DecompressionError> for PutCourses2Error {
-    fn from(err: DecompressionError) -> Self {
-        PutCourses2Error::Decompression(err)
+impl From<smmdb_lib::Error> for PutCourses2Error {
+    fn from(err: smmdb_lib::Error) -> Self {
+        PutCourses2Error::Smmdb(err)
     }
 }
 
@@ -102,7 +101,7 @@ impl ResponseError for PutCourses2Error {
             PutCourses2Error::IoError(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             PutCourses2Error::Similarity(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Payload(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            PutCourses2Error::Decompression(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            PutCourses2Error::Smmdb(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::ThumbnailMissing => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),

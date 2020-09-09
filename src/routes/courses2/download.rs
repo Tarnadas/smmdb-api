@@ -17,13 +17,13 @@ pub async fn download_course(
 ) -> Result<HttpResponse, DownloadCourse2Error> {
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
-    let (data, thumb) = data.get_course2(course_oid)?;
+    let (data, mut thumb) = data.get_course2(course_oid)?;
 
     let mut gz = GzDecoder::new(&data[..]);
     let mut data = vec![];
     gz.read_to_end(&mut data)?;
-    let data = smmdb_lib::Course2::encrypt(data);
-    let thumb = smmdb_lib::Thumbnail2::encrypt(thumb);
+    smmdb_lib::Course2::encrypt(&mut data);
+    smmdb_lib::Thumbnail2::encrypt(&mut thumb);
 
     let mut builder = Builder::new(vec![]);
 

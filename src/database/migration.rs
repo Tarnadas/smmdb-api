@@ -82,8 +82,7 @@ impl Migration {
             let mut course_data = vec![];
             gz.read_to_end(&mut course_data)?;
 
-            let course =
-                smmdb_lib::Course2::from_switch_files(&course_data[..], None, false).unwrap();
+            let course = smmdb_lib::Course2::from_switch_files(course_data, None, false).unwrap();
             let course_meta = serde_json::to_value(course.get_course()).unwrap();
             if let Bson::Document(doc_meta) = Bson::from(course_meta) {
                 let filter = doc! {
