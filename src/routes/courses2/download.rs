@@ -6,7 +6,10 @@ use bson::{oid::ObjectId, ValueAccessError};
 use flate2::read::GzDecoder;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
-use std::io::{self, prelude::*};
+use std::{
+    io::{self, prelude::*},
+    time::SystemTime,
+};
 use tar::{Builder, Header};
 
 #[get("download/{course_id}")]
@@ -26,11 +29,16 @@ pub async fn download_course(
     smmdb_lib::Thumbnail2::encrypt(&mut thumb);
 
     let mut builder = Builder::new(vec![]);
+    let mtime = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
 
     let mut header = Header::new_gnu();
     header.set_path("course_data_000.bcd").unwrap();
     header.set_size(data.len() as u64);
     header.set_mode(0o644);
+    header.set_mtime(mtime);
     header.set_cksum();
     builder.append(&header, &data[..])?;
 
@@ -38,6 +46,7 @@ pub async fn download_course(
     header.set_path("course_thumb_000.btl").unwrap();
     header.set_size(thumb.len() as u64);
     header.set_mode(0o644);
+    header.set_mtime(mtime);
     header.set_cksum();
     builder.append(&header, &thumb[..])?;
 
