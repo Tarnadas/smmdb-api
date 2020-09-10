@@ -2,51 +2,71 @@ use crate::server::ServerData;
 
 use actix_http::http::header;
 use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpResponse};
+use brotli2::read::BrotliDecoder;
 use bson::{oid::ObjectId, ValueAccessError};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
-use std::{io, time::SystemTime};
+use std::{
+    io::{self, prelude::*},
+    time::SystemTime,
+};
 use tar::{Builder, Header};
 
 #[get("download/{course_id}")]
 pub async fn download_course(
     data: web::Data<ServerData>,
     path: web::Path<String>,
-    _query: QsQuery<DownloadCourse2>,
+    query: QsQuery<DownloadCourse2>,
 ) -> Result<HttpResponse, DownloadCourse2Error> {
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
-    let (data, thumb) = data.get_course2(course_oid)?;
 
-    let mut builder = Builder::new(vec![]);
-    let mtime = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+    match query.format {
+        Format::Tar => {
+            let (data, thumb) = data.get_course2(course_oid)?;
 
-    let mut header = Header::new_gnu();
-    header.set_path("course_data_000.bcd").unwrap();
-    header.set_size(data.len() as u64);
-    header.set_mode(0o644);
-    header.set_mtime(mtime);
-    header.set_cksum();
-    builder.append(&header, &data[..])?;
+            let mut builder = Builder::new(vec![]);
+            let mtime = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
 
-    let mut header = Header::new_gnu();
-    header.set_path("course_thumb_000.btl").unwrap();
-    header.set_size(thumb.len() as u64);
-    header.set_mode(0o644);
-    header.set_mtime(mtime);
-    header.set_cksum();
-    builder.append(&header, &thumb[..])?;
+            let mut header = Header::new_gnu();
+            header.set_path("course_data_000.bcd").unwrap();
+            header.set_size(data.len() as u64);
+            header.set_mode(0o644);
+            header.set_mtime(mtime);
+            header.set_cksum();
+            builder.append(&header, &data[..])?;
 
-    Ok(HttpResponse::Ok()
-        .content_type("application/x-tar")
-        .set_header(
-            header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}.tar\"", course_id),
-        )
-        .body(builder.into_inner()?))
+            let mut header = Header::new_gnu();
+            header.set_path("course_thumb_000.btl").unwrap();
+            header.set_size(thumb.len() as u64);
+            header.set_mode(0o644);
+            header.set_mtime(mtime);
+            header.set_cksum();
+            builder.append(&header, &thumb[..])?;
+
+            Ok(HttpResponse::Ok()
+                .content_type("application/x-tar")
+                .set_header(
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}.tar\"", course_id),
+                )
+                .body(builder.into_inner()?))
+        }
+        Format::ProtobufBr => {
+            let data = data.get_course2_proto(course_oid)?;
+
+            Ok(HttpResponse::Ok()
+                .content_type("application/octet-stream")
+                .set_header(
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}.br\"", course_id),
+                )
+                .body(data))
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,20 +78,13 @@ pub struct DownloadCourse2 {
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
-    TAR,
+    Tar,
+    ProtobufBr,
 }
 
 impl Default for Format {
     fn default() -> Self {
-        Format::TAR
-    }
-}
-
-impl Into<String> for Format {
-    fn into(self) -> String {
-        match self {
-            Format::TAR => "tar".to_string(),
-        }
+        Format::Tar
     }
 }
 

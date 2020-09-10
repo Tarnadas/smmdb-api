@@ -108,6 +108,24 @@ impl Data {
         }
     }
 
+    pub fn get_course2_proto(&self, course_id: ObjectId) -> Result<Vec<u8>, DownloadCourse2Error> {
+        let doc = doc! {
+            "_id" => course_id.clone()
+        };
+        let thumb: String = Size2::ENCRYPTED.into();
+        let projection = doc! {
+            thumb.clone() => 1,
+            "data_protobuf_br" => 1
+        };
+        let course = self.database.get_course2(doc, projection)?;
+        if let Some(course) = course {
+            let data = course.get_binary_generic(&"data_protobuf_br")?;
+            Ok(data.clone())
+        } else {
+            Err(DownloadCourse2Error::CourseNotFound(course_id))
+        }
+    }
+
     pub fn get_course2_thumbnail(
         &self,
         course_id: ObjectId,
