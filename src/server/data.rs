@@ -17,9 +17,7 @@ use crate::{
     session::{AuthReq, AuthSession},
 };
 
-use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, spec::BinarySubtype, Bson};
-use flate2::{read::GzEncoder, Compression};
 use image::{
     error::{ImageError, ImageFormatHint, UnsupportedError, UnsupportedErrorKind},
     imageops::FilterType,
@@ -28,7 +26,7 @@ use image::{
 };
 use rayon::prelude::*;
 use std::{
-    io::{self, Read},
+    io,
     sync::{Arc, Mutex},
 };
 
@@ -95,14 +93,14 @@ impl Data {
         let doc = doc! {
             "_id" => course_id.clone()
         };
-        let thumb: String = Size2::ORIGINAL.into();
+        let thumb: String = Size2::ENCRYPTED.into();
         let projection = doc! {
             thumb.clone() => 1,
-            "data_gz" => 1
+            "data_encrypted" => 1
         };
         let course = self.database.get_course2(doc, projection)?;
         if let Some(course) = course {
-            let data = course.get_binary_generic(&"data_gz")?;
+            let data = course.get_binary_generic(&"data_encrypted")?;
             let thumb = course.get_binary_generic(&thumb)?;
             Ok((data.clone(), thumb.clone()))
         } else {
@@ -206,22 +204,16 @@ impl Data {
                     );
                     let course_meta = serde_json::to_value(&course)?;
 
-                    let mut gz =
-                        GzEncoder::new(&smm_course.get_course_data()[..], Compression::best());
-                    let mut data_gz = vec![];
-                    gz.read_to_end(&mut data_gz)?;
-                    let data_gz = Bson::Binary(BinarySubtype::Generic, data_gz);
-
-                    let mut data_br = vec![];
-                    let mut params = CompressParams::new();
-                    params.quality(11);
-                    BrotliEncoder::from_params(&smm_course.get_course_data()[..], &params)
-                        .read_to_end(&mut data_br)?;
-                    let data_br = Bson::Binary(BinarySubtype::Generic, data_br);
+                    let mut course_data = smm_course.get_course_data().clone();
+                    smmdb_lib::Course2::encrypt(&mut course_data);
+                    let data = Bson::Binary(BinarySubtype::Generic, course_data);
 
                     let course_thumb = smm_course
                         .get_course_thumb_mut()
                         .ok_or(courses2::PutCourses2Error::ThumbnailMissing)?;
+                    let mut thumb_data = course_thumb.get_jpeg().to_vec();
+                    smmdb_lib::Thumbnail2::encrypt(&mut thumb_data);
+                    let thumb_encrypted = Bson::Binary(BinarySubtype::Generic, thumb_data);
                     let thumb =
                         Bson::Binary(BinarySubtype::Generic, course_thumb.get_jpeg().to_vec());
 
@@ -255,9 +247,9 @@ impl Data {
                             }
                         }
 
-                        let inserted_id = self
-                            .database
-                            .put_course2(doc_meta, data_gz, data_br, thumb)?;
+                        let inserted_id =
+                            self.database
+                                .put_course2(doc_meta, data, thumb, thumb_encrypted)?;
                         course.set_id(inserted_id);
                         lsh_index.insert(course.get_id().to_hex(), course.get_hash());
                         let course = Course2Response::from_course(course, account);

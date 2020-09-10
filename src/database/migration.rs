@@ -1,8 +1,8 @@
 use super::Database;
 
-use crate::database::DatabaseError;
+use crate::{course2::Course2, database::DatabaseError};
 
-use bson::{ordered::OrderedDocument, Bson};
+use bson::{ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -15,6 +15,7 @@ impl Migration {
     pub fn run(database: &Database) {
         Migration::generate_api_keys(&database.accounts);
         Migration::migrate_bad_courses2(database);
+        Migration::migrate_course2_data(database);
     }
 
     fn generate_api_keys(coll: &Collection) {
@@ -97,5 +98,77 @@ impl Migration {
             }
         }
         Ok(())
+    }
+
+    fn migrate_course2_data(database: &Database) {
+        println!("Fixing SMM2 course data...");
+        let fixed_count = Arc::new(Mutex::new(0u32));
+        database
+            .get_courses2_result(vec![])
+            .unwrap()
+            .into_par_iter()
+            .filter_map(Result::ok)
+            .for_each(|course| {
+                if Migration::fix_course2_data(database, course).unwrap() {
+                    let count = *fixed_count.lock().unwrap() + 1;
+                    *fixed_count.lock().unwrap() = count;
+                }
+            });
+        println!("Fixed {} SMM2 courses", fixed_count.lock().unwrap());
+    }
+
+    fn fix_course2_data(
+        database: &Database,
+        course: Course2,
+    ) -> Result<bool, mongodb::error::Error> {
+        use std::io::prelude::*;
+
+        let doc = database
+            .course2_data
+            .find_one(
+                Some(doc! {
+                    "_id" => course.get_id()
+                }),
+                None,
+            )?
+            .unwrap();
+        let bson_course = doc.get("data_gz");
+        if bson_course.is_none() {
+            return Ok(false);
+        }
+        let bson_course = bson_course.unwrap();
+        let bson_thumb = doc.get("thumb");
+        if bson_thumb.is_none() {
+            return Ok(false);
+        }
+        let bson_thumb = bson_thumb.unwrap().clone();
+        if let Bson::Binary(_, data) = bson_course {
+            if let Bson::Binary(_, mut thumb) = bson_thumb {
+                let mut gz = GzDecoder::new(&data[..]);
+                let mut course_data = vec![];
+                gz.read_to_end(&mut course_data)?;
+                smmdb_lib::Course2::encrypt(&mut course_data);
+                smmdb_lib::Thumbnail2::encrypt(&mut thumb);
+
+                let filter = doc! {
+                    "_id" => course.get_id().clone(),
+                };
+                let update = doc! {
+                    "$set" => {
+                        "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data),
+                        "thumb_encrypted" => Bson::Binary(BinarySubtype::Generic, thumb.clone()),
+                    },
+                    "$unset" => {
+                        "data_gz" => "",
+                        "data_br" => "",
+                    }
+                };
+                database
+                    .course2_data
+                    .update_one(filter, update, None)
+                    .unwrap();
+            }
+        }
+        Ok(true)
     }
 }

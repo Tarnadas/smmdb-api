@@ -31,6 +31,7 @@ pub enum Size2 {
     M,
     L,
     ORIGINAL,
+    ENCRYPTED,
 }
 
 impl Size2 {
@@ -40,6 +41,7 @@ impl Size2 {
             Size2::M => (320, 180),
             Size2::L => (480, 270),
             Size2::ORIGINAL => (640, 360),
+            Size2::ENCRYPTED => (640, 360),
         }
     }
 }
@@ -57,6 +59,7 @@ impl Into<String> for Size2 {
             Size2::M => "thumb_m".to_string(),
             Size2::L => "thumb_l".to_string(),
             Size2::ORIGINAL => "thumb".to_string(),
+            Size2::ENCRYPTED => "thumb_encrypted".to_string(),
         }
     }
 }

@@ -197,9 +197,9 @@ impl Database {
     pub fn put_course2(
         &self,
         doc_meta: OrderedDocument,
-        data_gz: Bson,
-        data_br: Bson,
+        data: Bson,
         thumb: Bson,
+        thumb_encrypted: Bson,
     ) -> Result<ObjectId, mongodb::error::Error> {
         let insert_res = self.courses2.insert_one(doc_meta, None)?;
         let inserted_id = insert_res
@@ -207,9 +207,9 @@ impl Database {
             .ok_or_else(|| mongodb::Error::ResponseError("inserted_id not given".to_string()))?;
         let doc = doc! {
             "_id" => inserted_id.clone(),
-            "data_gz" => data_gz,
-            "data_br" => data_br,
+            "data_encrypted" => data,
             "thumb" => thumb,
+            "thumb_encrypted" => thumb_encrypted,
         };
         self.course2_data.insert_one(doc, None)?;
         Ok(inserted_id.as_object_id().unwrap().clone())

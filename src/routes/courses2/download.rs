@@ -3,13 +3,9 @@ use crate::server::ServerData;
 use actix_http::http::header;
 use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpResponse};
 use bson::{oid::ObjectId, ValueAccessError};
-use flate2::read::GzDecoder;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
-use std::{
-    io::{self, prelude::*},
-    time::SystemTime,
-};
+use std::{io, time::SystemTime};
 use tar::{Builder, Header};
 
 #[get("download/{course_id}")]
@@ -20,13 +16,7 @@ pub async fn download_course(
 ) -> Result<HttpResponse, DownloadCourse2Error> {
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
-    let (data, mut thumb) = data.get_course2(course_oid)?;
-
-    let mut gz = GzDecoder::new(&data[..]);
-    let mut data = vec![];
-    gz.read_to_end(&mut data)?;
-    smmdb_lib::Course2::encrypt(&mut data);
-    smmdb_lib::Thumbnail2::encrypt(&mut thumb);
+    let (data, thumb) = data.get_course2(course_oid)?;
 
     let mut builder = Builder::new(vec![]);
     let mtime = SystemTime::now()
