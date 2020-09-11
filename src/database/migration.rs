@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::Database;
 
 use crate::{course2::Course2, database::DatabaseError};
@@ -17,7 +19,8 @@ impl Migration {
         Migration::generate_api_keys(&database.accounts);
         Migration::migrate_bad_courses2(database);
         Migration::migrate_course2_data(database);
-        Migration::migrate_course2_data_protobuf(database);
+        // Migration::migrate_course2_data_protobuf(database);
+        // Migration::migrate_course2_data_br(database);
     }
 
     fn generate_api_keys(coll: &Collection) {
@@ -231,6 +234,74 @@ impl Migration {
             let update = doc! {
                 "$set" => {
                     "data_protobuf_br" => Bson::Binary(BinarySubtype::Generic, data_br),
+                }
+            };
+            database
+                .course2_data
+                .update_one(filter, update, None)
+                .unwrap();
+        }
+        Ok(true)
+    }
+
+    fn migrate_course2_data_br(database: &Database) {
+        println!("Adding SMM2 decrypted brotli data...");
+        let fixed_count = Arc::new(Mutex::new(0u32));
+        database
+            .get_courses2_result(vec![])
+            .unwrap()
+            .into_par_iter()
+            .filter_map(Result::ok)
+            .for_each(|course| {
+                if Migration::add_course2_data_br(database, course).unwrap() {
+                    let count = *fixed_count.lock().unwrap() + 1;
+                    *fixed_count.lock().unwrap() = count;
+                }
+            });
+        println!(
+            "Added {} SMM2 decrypted brotli data",
+            fixed_count.lock().unwrap()
+        );
+    }
+
+    fn add_course2_data_br(
+        database: &Database,
+        course: Course2,
+    ) -> Result<bool, mongodb::error::Error> {
+        use std::io::prelude::*;
+
+        let doc = database
+            .course2_data
+            .find_one(
+                Some(doc! {
+                    "_id" => course.get_id()
+                }),
+                None,
+            )?
+            .unwrap();
+        if doc.get("data_br").is_some() {
+            return Ok(false);
+        }
+        let bson_course = doc.get("data_encrypted");
+        if bson_course.is_none() {
+            return Ok(false);
+        }
+        let bson_course = bson_course.unwrap();
+        let course_id = course.get_id().clone();
+        if let Bson::Binary(_, mut course_data) = bson_course.clone() {
+            smmdb_lib::Course2::decrypt(&mut course_data);
+
+            let mut data_br = vec![];
+            let mut params = CompressParams::new();
+            params.quality(11);
+            BrotliEncoder::from_params(&course_data[..], &params).read_to_end(&mut data_br)?;
+
+            let filter = doc! {
+                "_id" => course_id,
+            };
+            let update = doc! {
+                "$set" => {
+                    "data_br" => Bson::Binary(BinarySubtype::Generic, data_br),
                 }
             };
             database

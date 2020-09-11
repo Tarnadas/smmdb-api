@@ -8,6 +8,7 @@ use crate::{
     session::AuthSession,
 };
 
+use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use mongodb::{
     coll::{options::FindOptions, results::InsertOneResult, Collection},
@@ -396,5 +397,69 @@ impl Database {
         };
         self.accounts.update_one(filter, update, None)?;
         Ok(())
+    }
+
+    pub fn add_course2_data_br(
+        &self,
+        course_id: ObjectId,
+        course: OrderedDocument,
+    ) -> Result<Vec<u8>, mongodb::error::Error> {
+        use std::io::prelude::*;
+
+        let bson_course = course.get("data_encrypted").unwrap();
+        if let Bson::Binary(_, mut course_data) = bson_course.clone() {
+            smmdb_lib::Course2::decrypt(&mut course_data);
+
+            let mut data_br = vec![];
+            let mut params = CompressParams::new();
+            params.quality(11);
+            BrotliEncoder::from_params(&course_data[..], &params).read_to_end(&mut data_br)?;
+
+            let filter = doc! {
+                "_id" => course_id,
+            };
+            let update = doc! {
+                "$set" => {
+                    "data_br" => Bson::Binary(BinarySubtype::Generic, data_br.clone()),
+                }
+            };
+            self.course2_data.update_one(filter, update, None).unwrap();
+            Ok(data_br)
+        } else {
+            todo!()
+        }
+    }
+
+    pub fn add_course2_data_protobuf_br(
+        &self,
+        course_id: ObjectId,
+        course: OrderedDocument,
+    ) -> Result<Vec<u8>, mongodb::error::Error> {
+        use std::io::prelude::*;
+
+        let bson_course = course.get("data_encrypted").unwrap();
+        if let Bson::Binary(_, course_data) = bson_course.clone() {
+            let course =
+                smmdb_lib::Course2::from_switch_files(course_data.clone(), None, true).unwrap();
+            let course_data = course.into_proto();
+
+            let mut data_br = vec![];
+            let mut params = CompressParams::new();
+            params.quality(11);
+            BrotliEncoder::from_params(&course_data[..], &params).read_to_end(&mut data_br)?;
+
+            let filter = doc! {
+                "_id" => course_id,
+            };
+            let update = doc! {
+                "$set" => {
+                    "data_protobuf_br" => Bson::Binary(BinarySubtype::Generic, data_br.clone()),
+                }
+            };
+            self.course2_data.update_one(filter, update, None).unwrap();
+            Ok(data_br)
+        } else {
+            todo!()
+        }
     }
 }

@@ -2,14 +2,10 @@ use crate::server::ServerData;
 
 use actix_http::http::header;
 use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpResponse};
-use brotli2::read::BrotliDecoder;
 use bson::{oid::ObjectId, ValueAccessError};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
-use std::{
-    io::{self, prelude::*},
-    time::SystemTime,
-};
+use std::{io, time::SystemTime};
 use tar::{Builder, Header};
 
 #[get("download/{course_id}")]
@@ -21,10 +17,14 @@ pub async fn download_course(
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
 
-    match query.format {
-        Format::Tar => {
-            let (data, thumb) = data.get_course2(course_oid)?;
+    let (data, thumb) = match (&query.course_format, &query.thumb_format) {
+        (CourseFormat::Encrypted, ThumbFormat::Encrypted) => data.get_course2(course_oid)?,
+        (CourseFormat::Br, ThumbFormat::Encrypted) => data.get_course2_br(course_oid)?,
+        (CourseFormat::ProtobufBr, ThumbFormat::Encrypted) => data.get_course2_proto(course_oid)?,
+    };
 
+    match query.file_format {
+        FileFormat::Tar => {
             let mut builder = Builder::new(vec![]);
             let mtime = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -32,7 +32,13 @@ pub async fn download_course(
                 .as_secs();
 
             let mut header = Header::new_gnu();
-            header.set_path("course_data_000.bcd").unwrap();
+            header
+                .set_path(match &query.course_format {
+                    CourseFormat::Encrypted => "course_data_000.bcd",
+                    CourseFormat::Br => "course_data_000.br",
+                    CourseFormat::ProtobufBr => "course_data_000.proto.br",
+                })
+                .unwrap();
             header.set_size(data.len() as u64);
             header.set_mode(0o644);
             header.set_mtime(mtime);
@@ -55,36 +61,54 @@ pub async fn download_course(
                 )
                 .body(builder.into_inner()?))
         }
-        Format::ProtobufBr => {
-            let data = data.get_course2_proto(course_oid)?;
-
-            Ok(HttpResponse::Ok()
-                .content_type("application/octet-stream")
-                .set_header(
-                    header::CONTENT_DISPOSITION,
-                    format!("attachment; filename=\"{}.br\"", course_id),
-                )
-                .body(data))
-        }
     }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DownloadCourse2 {
     #[serde(default)]
-    pub format: Format,
+    pub file_format: FileFormat,
+    #[serde(default)]
+    pub course_format: CourseFormat,
+    #[serde(default)]
+    pub thumb_format: ThumbFormat,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
-pub enum Format {
+pub enum FileFormat {
     Tar,
+}
+
+impl Default for FileFormat {
+    fn default() -> Self {
+        FileFormat::Tar
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum CourseFormat {
+    Encrypted,
+    Br,
     ProtobufBr,
 }
 
-impl Default for Format {
+impl Default for CourseFormat {
     fn default() -> Self {
-        Format::Tar
+        CourseFormat::Encrypted
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ThumbFormat {
+    Encrypted,
+}
+
+impl Default for ThumbFormat {
+    fn default() -> Self {
+        ThumbFormat::Encrypted
     }
 }
 

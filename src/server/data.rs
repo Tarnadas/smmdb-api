@@ -108,7 +108,40 @@ impl Data {
         }
     }
 
-    pub fn get_course2_proto(&self, course_id: ObjectId) -> Result<Vec<u8>, DownloadCourse2Error> {
+    pub fn get_course2_br(
+        &self,
+        course_id: ObjectId,
+    ) -> Result<(Vec<u8>, Vec<u8>), DownloadCourse2Error> {
+        let doc = doc! {
+            "_id" => course_id.clone()
+        };
+        let thumb: String = Size2::ENCRYPTED.into();
+        let projection = doc! {
+            thumb.clone() => 1,
+            "data_br" => 1,
+            "data_encrypted" => 1,
+        };
+        let course = self.database.get_course2(doc, projection)?;
+        if let Some(course) = course {
+            let thumb = course.get_binary_generic(&thumb)?;
+            if let Ok(data) = course.get_binary_generic(&"data_br") {
+                Ok((data.clone(), thumb.clone()))
+            } else {
+                Ok((
+                    self.database
+                        .add_course2_data_br(course_id, course.clone())?,
+                    thumb.clone(),
+                ))
+            }
+        } else {
+            Err(DownloadCourse2Error::CourseNotFound(course_id))
+        }
+    }
+
+    pub fn get_course2_proto(
+        &self,
+        course_id: ObjectId,
+    ) -> Result<(Vec<u8>, Vec<u8>), DownloadCourse2Error> {
         let doc = doc! {
             "_id" => course_id.clone()
         };
@@ -119,8 +152,16 @@ impl Data {
         };
         let course = self.database.get_course2(doc, projection)?;
         if let Some(course) = course {
-            let data = course.get_binary_generic(&"data_protobuf_br")?;
-            Ok(data.clone())
+            let thumb = course.get_binary_generic(&thumb)?;
+            if let Ok(data) = course.get_binary_generic(&"data_protobuf_br") {
+                Ok((data.clone(), thumb.clone()))
+            } else {
+                Ok((
+                    self.database
+                        .add_course2_data_protobuf_br(course_id, course.clone())?,
+                    thumb.clone(),
+                ))
+            }
         } else {
             Err(DownloadCourse2Error::CourseNotFound(course_id))
         }
