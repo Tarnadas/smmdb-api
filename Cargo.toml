@@ -5,13 +5,13 @@ authors = ["Mario Reder <mreder1289@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix-cors = "0.2"
-actix-http = { version = "1", features = [ "rustls" ] }
+actix-cors = "0.3"
+actix-http = { version = "2", features = [ "rustls" ] }
 actix-service = "1"
-actix-session = "0.3"
-actix-web = "2"
+actix-session = "0.4"
+actix-web = "3"
 actix-rt = "1"
-awc = "1"
+awc = "2"
 brotli2 = "0.3"
 bson = "0.14"
 chrono = "0.4"
@@ -29,7 +29,7 @@ rayon = "1"
 regex = "1"
 serde = "1"
 serde_json = "1"
-serde_qs = { version = "0.7", features = ["actix"] }
+serde_qs = { version = "0.7", features = ["actix"], git = "https://github.com/Tarnadas/serde_qs.git" }
 smmdb-lib = { version = "1", package = "smmdb" }
 tar = "0.4"
 twox-hash = "1"

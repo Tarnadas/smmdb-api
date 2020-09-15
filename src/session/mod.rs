@@ -100,7 +100,7 @@ where
 
     fn call(&mut self, mut req: ServiceRequest) -> Self::Future {
         let session = req.get_session();
-        let data: Option<Data<ServerData>> = req.app_data();
+        let data: Option<&Data<ServerData>> = req.app_data();
         if let Some(data) = data {
             if let Ok(auth_req) = AuthReq::try_from(session) {
                 let expires_at = auth_req.session.as_ref().unwrap().expires_at;
