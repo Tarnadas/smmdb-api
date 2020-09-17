@@ -1,9 +1,10 @@
 use crate::{
     account::{Account, AccountReq},
     config::GOOGLE_CLIENT_ID,
+    course::{Course, CourseResponse},
     course2::{self, Course2, Course2Response, Course2SimilarityError},
     database::Database,
-    minhash::{LshIndex, PermGen},
+    minhash::{LshIndex, MinHash, PermGen},
     routes::{
         courses,
         courses2::{
@@ -15,9 +16,10 @@ use crate::{
         },
     },
     session::{AuthReq, AuthSession},
+    Vote,
 };
 
-use bson::{oid::ObjectId, spec::BinarySubtype, Bson};
+use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use image::{
     error::{ImageError, ImageFormatHint, UnsupportedError, UnsupportedErrorKind},
     imageops::FilterType,
@@ -26,6 +28,7 @@ use image::{
 };
 use rayon::prelude::*;
 use std::{
+    convert::TryInto,
     io,
     sync::{Arc, Mutex},
     time::SystemTime,
@@ -46,7 +49,7 @@ impl Data {
     pub fn new(database: Arc<Database>) -> Self {
         let mut lsh_index = LshIndex::new(8);
         println!("Filling LshIndex");
-        database.fill_lsh_index(&mut lsh_index);
+        Data::fill_lsh_index(&database, &mut lsh_index);
         println!("Filling LshIndex completed!");
         Data {
             database,
@@ -56,12 +59,52 @@ impl Data {
         }
     }
 
+    pub fn fill_lsh_index(database: &Database, lsh_index: &mut LshIndex) {
+        if let Ok(cursor) = database.fill_lsh_index() {
+            cursor.filter_map(Result::ok).for_each(|item| {
+                if let (Some(id), Some(hash)) = (item.get("_id"), item.get("hash")) {
+                    let hash: serde_json::Value = hash.clone().into();
+                    let hash: Result<MinHash, _> = serde_json::from_value(hash);
+                    if let (Bson::ObjectId(id), Ok(hash)) = (id.clone(), hash) {
+                        lsh_index.insert(id.to_hex(), &hash);
+                    }
+                }
+            });
+        }
+    }
+
     pub fn get_courses(
         &self,
         query: courses::GetCourses,
     ) -> Result<String, courses::GetCoursesError> {
         match query.into_ordered_document(&self.database) {
-            Ok(query) => Ok(self.database.get_courses(query)),
+            Ok(query) => Ok(match self.database.get_courses(query) {
+                Ok(cursor) => {
+                    let (account_ids, courses): (Vec<Bson>, Vec<Course>) = cursor
+                        .map(|item| {
+                            let course: Course = item.unwrap().into();
+                            (course.get_owner().clone().into(), course)
+                        })
+                        .unzip();
+
+                    let accounts = self.get_accounts(account_ids);
+                    let courses: Vec<CourseResponse> = courses
+                        .into_iter()
+                        .map(|course| {
+                            let account = accounts
+                                .iter()
+                                .find(|account| {
+                                    account.get_id().to_string() == course.get_owner().to_string()
+                                })
+                                .unwrap();
+                            CourseResponse::from_course(course, account)
+                        })
+                        .collect();
+
+                    serde_json::to_string(&courses).unwrap()
+                }
+                Err(e) => e.to_string(),
+            }),
             Err(error) => Err(error),
         }
     }
@@ -71,7 +114,17 @@ impl Data {
         query: courses2::GetCourses2,
     ) -> Result<String, courses2::GetCourses2Error> {
         let query = query.into_ordered_document(&self.database)?;
-        let (courses, accounts) = self.database.get_courses2(query)?;
+        let cursor = self.database.get_courses2(query)?;
+
+        let (account_ids, courses): (Vec<Bson>, Vec<Course2>) = cursor
+            .map(|item| -> Result<(Bson, Course2), serde_json::Error> {
+                let course: Course2 = item.unwrap().try_into()?;
+                Ok((course.get_owner().clone().into(), course))
+            })
+            .filter_map(Result::ok)
+            .unzip();
+
+        let accounts = self.get_accounts(account_ids);
 
         let courses: Vec<Course2Response> = courses
             .into_iter()
@@ -289,7 +342,7 @@ impl Data {
                                 "$in" => query
                             }
                         };
-                        let similar_courses = self.database.find_courses2(query)?;
+                        let similar_courses = self.find_courses2(query)?;
                         for similar_course in similar_courses {
                             let jaccard = course.get_hash().jaccard(similar_course.get_hash());
                             if jaccard > SIMILARITY_THRESHOLD {
@@ -380,8 +433,20 @@ impl Data {
             "value" => 1,
             "timestamp" => 1,
         };
-        let votes = self.database.get_votes_course2(filter, projection)?;
-        let vote_value: i32 = votes.iter().fold(0, |acc, vote| acc + vote.get_value());
+        let votes: Result<Vec<Vote>, mongodb::Error> = self
+            .database
+            .get_votes_course2(filter, projection)?
+            .map(|item| {
+                item.map(|item| -> Result<Vote, serde_json::Error> { item.try_into() })
+                    .map_err(|err| {
+                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
+                    })?
+                    .map_err(|err| {
+                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
+                    })
+            })
+            .collect();
+        let vote_value: i32 = votes?.iter().fold(0, |acc, vote| acc + vote.get_value());
         let filter = doc! {
             "_id" => course_id,
         };
@@ -416,9 +481,16 @@ impl Data {
         if !unset.is_empty() {
             update.insert("$unset", unset);
         }
-        Ok(self
-            .database
-            .post_course2_meta(course_id.to_string(), filter, update)?)
+        let update = self.database.update_courses2(filter, update)?;
+        if let Some(write_exception) = update.write_exception {
+            Err(write_exception.into())
+        } else {
+            if update.matched_count == 0 {
+                Err(mongodb::Error::ArgumentError(course_id.to_string()).into())
+            } else {
+                Ok(())
+            }
+        }
     }
 
     pub fn add_or_get_account(
@@ -426,13 +498,46 @@ impl Data {
         account: AccountReq,
         session: AuthSession,
     ) -> Result<Account, mongodb::error::Error> {
-        match self.database.find_account(account.as_find()) {
+        match Data::find_account(&self.database, account.as_find()) {
             Some(account) => {
-                self.database
-                    .store_account_session(account.get_id(), session)?;
+                let filter = doc! {
+                    "_id" => account.get_id().clone()
+                };
+                let session: OrderedDocument = session.into();
+                let update = doc! {
+                    "$set" => {
+                        "session" => session
+                    }
+                };
+                self.database.update_account(filter, update)?;
                 Ok(account)
             }
-            None => self.database.add_account(account, session),
+            None => {
+                let res = self
+                    .database
+                    .insert_account(account.clone().into_ordered_document())?;
+                let account = Account::new(
+                    account,
+                    res.inserted_id
+                        .ok_or_else(|| {
+                            mongodb::Error::ResponseError("insert_id missing".to_string())
+                        })?
+                        .as_object_id()
+                        .unwrap()
+                        .clone(),
+                    session,
+                );
+                let filter = doc! {
+                    "_id" => account.get_id()
+                };
+                let update = doc! {
+                    "$set" => {
+                        "apikey" => account.get_apikey()
+                    }
+                };
+                self.database.update_account(filter, update)?;
+                Ok(account)
+            }
         }
     }
 
@@ -441,7 +546,7 @@ impl Data {
     }
 
     pub fn get_account_from_auth(&self, auth_req: AuthReq) -> Option<Account> {
-        self.database.find_account(auth_req.into())
+        Data::find_account(&self.database, auth_req.into())
     }
 
     pub fn does_account_own_course(&self, account_id: ObjectId, course_oid: ObjectId) -> bool {
@@ -449,10 +554,41 @@ impl Data {
             "_id" => course_oid,
             "owner" => account_id
         };
-        if let Ok(courses) = self.database.find_courses2(query) {
+        if let Ok(courses) = self.find_courses2(query) {
             courses.len() == 1
         } else {
             false
         }
+    }
+
+    fn find_courses2(&self, doc: OrderedDocument) -> Result<Vec<Course2>, mongodb::Error> {
+        match self.database.find_courses2(doc) {
+            Ok(cursor) => {
+                let courses: Vec<Course2> = cursor
+                    .map(|item| -> Result<Course2, serde_json::Error> {
+                        let course: Course2 = item.unwrap().try_into()?;
+                        Ok(course)
+                    })
+                    .filter_map(Result::ok)
+                    .collect();
+                Ok(courses)
+            }
+            Err(err) => Err(err),
+        }
+    }
+
+    fn get_accounts(&self, account_ids: Vec<Bson>) -> Vec<Account> {
+        self.database
+            .get_accounts(account_ids)
+            .unwrap()
+            .map(|item| item.unwrap().into())
+            .collect()
+    }
+
+    pub fn find_account(database: &Database, filter: OrderedDocument) -> Option<Account> {
+        database
+            .find_account(filter)
+            .unwrap()
+            .map(|item| item.into())
     }
 }

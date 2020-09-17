@@ -1,4 +1,8 @@
-use crate::{course2::Difficulty, server::ServerData, Database};
+use crate::{
+    course2::Difficulty,
+    server::{Data, ServerData},
+    Database,
+};
 
 use actix_web::{
     error::ResponseError, get, http::StatusCode, web, Error, HttpRequest, HttpResponse,
@@ -114,7 +118,7 @@ impl GetCourses2 {
             let filter = doc! {
                 "username" => Bson::RegExp(format!("^{}$", uploader), "i".to_string())
             };
-            match database.find_account(filter) {
+            match Data::find_account(database, filter) {
                 Some(account) => {
                     res.insert_bson(
                         "owner".to_string(),

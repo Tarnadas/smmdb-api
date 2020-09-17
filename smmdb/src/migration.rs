@@ -10,7 +10,10 @@ use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
+use std::{
+    convert::TryInto,
+    sync::{Arc, Mutex},
+};
 
 pub struct Migration;
 
@@ -53,8 +56,7 @@ impl Migration {
     fn migrate_bad_courses2(database: &Database) {
         println!("Fixing old SMM2 course formats...");
         let fixed_count = Arc::new(Mutex::new(0u32));
-        database
-            .get_courses2_result(vec![])
+        Migration::get_courses2_result(database, vec![])
             .unwrap()
             .into_par_iter()
             .filter_map(Result::err)
@@ -108,8 +110,7 @@ impl Migration {
     fn migrate_course2_data(database: &Database) {
         println!("Converting SMM2 course data...");
         let fixed_count = Arc::new(Mutex::new(0u32));
-        database
-            .get_courses2_result(vec![])
+        Migration::get_courses2_result(database, vec![])
             .unwrap()
             .into_par_iter()
             .filter_map(Result::ok)
@@ -180,8 +181,7 @@ impl Migration {
     fn migrate_course2_data_protobuf(database: &Database) {
         println!("Adding SMM2 protobuf data...");
         let fixed_count = Arc::new(Mutex::new(0u32));
-        database
-            .get_courses2_result(vec![])
+        Migration::get_courses2_result(database, vec![])
             .unwrap()
             .into_par_iter()
             .filter_map(Result::ok)
@@ -247,8 +247,7 @@ impl Migration {
     fn migrate_course2_data_br(database: &Database) {
         println!("Adding SMM2 decrypted brotli data...");
         let fixed_count = Arc::new(Mutex::new(0u32));
-        database
-            .get_courses2_result(vec![])
+        Migration::get_courses2_result(database, vec![])
             .unwrap()
             .into_par_iter()
             .filter_map(Result::ok)
@@ -310,5 +309,25 @@ impl Migration {
                 .unwrap();
         }
         Ok(true)
+    }
+
+    fn get_courses2_result(
+        database: &Database,
+        query: Vec<OrderedDocument>,
+    ) -> Result<Vec<Result<Course2, DatabaseError>>, mongodb::error::Error> {
+        let cursor = database.courses2.aggregate(query, None)?;
+
+        let courses: Vec<Result<Course2, DatabaseError>> = cursor
+            .map(|item| -> Result<Course2, DatabaseError> {
+                let item = item?;
+                let course: Course2 = item
+                    .clone()
+                    .try_into()
+                    .map_err(|err| DatabaseError::Course2ConvertError(item, err))?;
+                Ok(course)
+            })
+            .collect();
+
+        Ok(courses)
     }
 }

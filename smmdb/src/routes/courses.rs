@@ -1,14 +1,16 @@
-use crate::server::ServerData;
-use crate::Database;
+use crate::{
+    server::{Data, ServerData},
+    Database,
+};
 
 use actix_web::{dev, error::ResponseError, get, http::StatusCode, web, HttpRequest, HttpResponse};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
-use smmdb_lib::proto::SMMCourse::{
-    SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
-};
 use protobuf::ProtobufEnum;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
+use smmdb_lib::proto::SMMCourse::{
+    SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
+};
 
 pub fn service() -> impl dev::HttpServiceFactory {
     web::scope("/courses").service(get_courses)
@@ -120,7 +122,7 @@ impl GetCourses {
             let filter = doc! {
                 "username" => Bson::RegExp(format!("^{}$", uploader), "i".to_string())
             };
-            match database.find_account(filter) {
+            match Data::find_account(database, filter) {
                 Some(account) => {
                     res.insert_bson(
                         "owner".to_string(),

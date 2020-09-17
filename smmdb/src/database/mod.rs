@@ -1,39 +1,32 @@
-use crate::{
-    account::{Account, AccountReq},
-    collections::Collections,
-    course::{Course, CourseResponse},
-    course2::Course2,
-    minhash::{LshIndex, MinHash},
-    routes::courses2::meta::PostCourse2MetaError,
-    session::AuthSession,
-    Vote,
-};
+mod collections;
+
+use collections::Collections;
 
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use mongodb::{
     coll::{
         options::{FindOptions, UpdateOptions},
-        results::InsertOneResult,
+        results::{InsertOneResult, UpdateResult},
         Collection,
     },
+    cursor::Cursor,
     db::ThreadedDatabase,
     Client, ThreadedClient,
 };
-use std::{convert::TryInto, env};
+use std::env;
 
 mod error;
-mod migration;
 
-use error::*;
-use migration::*;
+pub use error::*;
 
 pub struct Database {
     courses: Collection,
     course_data: Collection,
-    courses2: Collection,
-    course2_data: Collection,
-    accounts: Collection,
+    // TODO non pub
+    pub courses2: Collection,
+    pub course2_data: Collection,
+    pub accounts: Collection,
     votes: Collection,
 }
 
@@ -72,16 +65,14 @@ impl Database {
             println!("{}", err);
         }
 
-        let database = Database {
+        Database {
             courses,
             course_data,
             courses2,
             course2_data,
             accounts,
             votes,
-        };
-        Migration::run(&database);
-        database
+        }
     }
 
     fn generate_course2_indexes(courses2: &Collection) -> Result<(), mongodb::error::Error> {
@@ -134,77 +125,16 @@ impl Database {
         Ok(())
     }
 
-    pub fn get_courses(&self, query: Vec<OrderedDocument>) -> String {
-        match self.courses.aggregate(query, None) {
-            Ok(cursor) => {
-                let (account_ids, courses): (Vec<Bson>, Vec<Course>) = cursor
-                    .map(|item| {
-                        let course: Course = item.unwrap().into();
-                        (course.get_owner().clone().into(), course)
-                    })
-                    .unzip();
-
-                let accounts = self.get_accounts(account_ids);
-                let courses: Vec<CourseResponse> = courses
-                    .into_iter()
-                    .map(|course| {
-                        let account = accounts
-                            .iter()
-                            .find(|account| {
-                                account.get_id().to_string() == course.get_owner().to_string()
-                            })
-                            .unwrap();
-                        CourseResponse::from_course(course, account)
-                    })
-                    .collect();
-
-                serde_json::to_string(&courses).unwrap()
-            }
-            Err(e) => e.to_string(),
-        }
+    pub fn get_courses(&self, query: Vec<OrderedDocument>) -> Result<Cursor, mongodb::Error> {
+        self.courses.aggregate(query, None)
     }
 
-    pub fn get_courses2(
-        &self,
-        query: Vec<OrderedDocument>,
-    ) -> Result<(Vec<Course2>, Vec<Account>), mongodb::error::Error> {
-        let cursor = self.courses2.aggregate(query, None)?;
-
-        let (account_ids, courses): (Vec<Bson>, Vec<Course2>) = cursor
-            .map(|item| -> Result<(Bson, Course2), serde_json::Error> {
-                let course: Course2 = item.unwrap().try_into()?;
-                Ok((course.get_owner().clone().into(), course))
-            })
-            .filter_map(Result::ok)
-            .unzip();
-
-        let accounts = self.get_accounts(account_ids);
-
-        Ok((courses, accounts))
+    pub fn get_courses2(&self, query: Vec<OrderedDocument>) -> Result<Cursor, mongodb::Error> {
+        self.courses2.aggregate(query, None)
     }
 
-    pub fn get_courses2_result(
-        &self,
-        query: Vec<OrderedDocument>,
-    ) -> Result<Vec<Result<Course2, DatabaseError>>, mongodb::error::Error> {
-        let cursor = self.courses2.aggregate(query, None)?;
-
-        let courses: Vec<Result<Course2, DatabaseError>> = cursor
-            .map(|item| -> Result<Course2, DatabaseError> {
-                let item = item?;
-                let course: Course2 = item
-                    .clone()
-                    .try_into()
-                    .map_err(|err| DatabaseError::Course2ConvertError(item, err))?;
-                Ok(course)
-            })
-            .collect();
-
-        Ok(courses)
-    }
-
-    pub fn fill_lsh_index(&self, lsh_index: &mut LshIndex) {
-        if let Ok(cursor) = self.courses2.find(
+    pub fn fill_lsh_index(&self) -> Result<Cursor, mongodb::Error> {
+        self.courses2.find(
             None,
             Some(FindOptions {
                 projection: Some(doc! {
@@ -212,17 +142,7 @@ impl Database {
                 }),
                 ..Default::default()
             }),
-        ) {
-            cursor.filter_map(Result::ok).for_each(|item| {
-                if let (Some(id), Some(hash)) = (item.get("_id"), item.get("hash")) {
-                    let hash: serde_json::Value = hash.clone().into();
-                    let hash: Result<MinHash, _> = serde_json::from_value(hash);
-                    if let (Bson::ObjectId(id), Ok(hash)) = (id.clone(), hash) {
-                        lsh_index.insert(id.to_hex(), &hash);
-                    }
-                }
-            });
-        }
+        )
     }
 
     pub fn put_course2(
@@ -327,145 +247,59 @@ impl Database {
         &self,
         filter: OrderedDocument,
         projection: OrderedDocument,
-    ) -> Result<Vec<Vote>, mongodb::error::Error> {
-        self.votes
-            .find(
-                Some(filter),
-                Some(FindOptions {
-                    projection: Some(projection),
-                    ..FindOptions::default()
-                }),
-            )?
-            .map(|item| {
-                item.map(|item| -> Result<Vote, serde_json::Error> { item.try_into() })
-                    .map_err(|err| {
-                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
-                    })?
-                    .map_err(|err| {
-                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
-                    })
-            })
-            .collect()
+    ) -> Result<Cursor, mongodb::Error> {
+        self.votes.find(
+            Some(filter),
+            Some(FindOptions {
+                projection: Some(projection),
+                ..FindOptions::default()
+            }),
+        )
     }
 
-    pub fn find_courses2(
-        &self,
-        doc: OrderedDocument,
-    ) -> Result<Vec<Course2>, mongodb::error::Error> {
-        match self.courses2.find(Some(doc), None) {
-            Ok(cursor) => {
-                let courses: Vec<Course2> = cursor
-                    .map(|item| -> Result<Course2, serde_json::Error> {
-                        let course: Course2 = item.unwrap().try_into()?;
-                        Ok(course)
-                    })
-                    .filter_map(Result::ok)
-                    .collect();
-                Ok(courses)
-            }
-            Err(err) => Err(err),
-        }
+    pub fn find_courses2(&self, doc: OrderedDocument) -> Result<Cursor, mongodb::Error> {
+        self.courses2.find(Some(doc), None)
     }
 
-    pub fn post_course2_meta(
+    pub fn update_courses2(
         &self,
-        course_id: String,
         filter: OrderedDocument,
         update: OrderedDocument,
-    ) -> Result<(), PostCourse2MetaError> {
-        let res = self.courses2.update_one(filter, update, None)?;
-        if let Some(write_exception) = res.write_exception {
-            Err(write_exception.into())
-        } else {
-            if res.matched_count == 0 {
-                Err(mongodb::Error::ArgumentError(course_id).into())
-            } else {
-                Ok(())
-            }
-        }
+    ) -> Result<UpdateResult, mongodb::Error> {
+        self.courses2.update_one(filter, update, None)
     }
 
-    pub fn get_account(&self, account_id: ObjectId) -> Option<Account> {
-        let mut account_res: Vec<Account> = self
-            .accounts
-            .find(
-                Some(doc! {
-                    "_id" => account_id
-                }),
-                None,
-            )
-            .unwrap()
-            .map(|item| item.unwrap().into())
-            .collect();
-        account_res.pop()
-    }
-
-    pub fn find_account(&self, filter: OrderedDocument) -> Option<Account> {
-        self.accounts
-            .find_one(Some(filter), None)
-            .unwrap()
-            .map(|item| item.into())
-    }
-
-    pub fn get_accounts(&self, account_ids: Vec<Bson>) -> Vec<Account> {
-        self.accounts
-            .find(
-                Some(doc! {
-                    "_id": {
-                        "$in": account_ids
-                    }
-                }),
-                None,
-            )
-            .unwrap()
-            .map(|item| item.unwrap().into())
-            .collect()
-    }
-
-    pub fn add_account(
+    pub fn find_account(
         &self,
-        account: AccountReq,
-        session: AuthSession,
-    ) -> Result<Account, mongodb::error::Error> {
-        let account_doc = account.clone().into_ordered_document();
-        let res: InsertOneResult = self.accounts.insert_one(account_doc, None)?;
-        let account = Account::new(
-            account,
-            res.inserted_id
-                .ok_or_else(|| mongodb::Error::ResponseError("insert_id missing".to_string()))?
-                .as_object_id()
-                .unwrap()
-                .clone(),
-            session,
-        );
-        let filter = doc! {
-            "_id" => account.get_id()
-        };
-        let update = doc! {
-            "$set" => {
-                "apikey" => account.get_apikey()
-            }
-        };
-        self.accounts.update_one(filter, update, None)?;
-        Ok(account)
+        filter: OrderedDocument,
+    ) -> Result<Option<OrderedDocument>, mongodb::Error> {
+        self.accounts.find_one(Some(filter), None)
     }
 
-    pub fn store_account_session(
+    pub fn get_accounts(&self, account_ids: Vec<Bson>) -> Result<Cursor, mongodb::Error> {
+        self.accounts.find(
+            Some(doc! {
+                "_id": {
+                    "$in": account_ids
+                }
+            }),
+            None,
+        )
+    }
+
+    pub fn insert_account(
         &self,
-        account_id: &ObjectId,
-        session: AuthSession,
-    ) -> Result<(), mongodb::error::Error> {
-        let filter = doc! {
-            "_id" => account_id.clone()
-        };
-        let session: OrderedDocument = session.into();
-        let update = doc! {
-            "$set" => {
-                "session" => session
-            }
-        };
-        self.accounts.update_one(filter, update, None)?;
-        Ok(())
+        account: OrderedDocument,
+    ) -> Result<InsertOneResult, mongodb::Error> {
+        self.accounts.insert_one(account, None)
+    }
+
+    pub fn update_account(
+        &self,
+        filter: OrderedDocument,
+        update: OrderedDocument,
+    ) -> Result<UpdateResult, mongodb::Error> {
+        self.accounts.update_one(filter, update, None)
     }
 
     pub fn delete_account_session(

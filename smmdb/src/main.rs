@@ -5,11 +5,11 @@ extern crate bson;
 extern crate failure;
 
 mod account;
-mod collections;
 mod config;
 mod course;
 mod course2;
 mod database;
+mod migration;
 mod minhash;
 mod routes;
 mod server;
@@ -21,8 +21,9 @@ pub use course2::Course2;
 pub use session::Identity;
 pub use vote::Vote;
 
-use crate::database::Database;
-use crate::server::Server;
+use database::Database;
+use migration::Migration;
+use server::Server;
 
 use std::io;
 
@@ -33,5 +34,6 @@ async fn main() -> io::Result<()> {
     use std::sync::Arc;
 
     let database = Database::new();
+    Migration::run(&database);
     Server::start(Arc::new(database)).unwrap().await
 }
