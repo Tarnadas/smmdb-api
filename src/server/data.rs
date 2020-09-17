@@ -28,6 +28,7 @@ use rayon::prelude::*;
 use std::{
     io,
     sync::{Arc, Mutex},
+    time::SystemTime,
 };
 
 const SIMILARITY_THRESHOLD: f64 = 0.95;
@@ -341,6 +342,56 @@ impl Data {
             "_id" => course_oid
         };
         self.database.delete_course2(course_id, query)
+    }
+
+    pub fn vote_course2(
+        &self,
+        account_id: ObjectId,
+        course_id: ObjectId,
+        value: i32,
+    ) -> Result<(), mongodb::error::Error> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let filter = doc! {
+            "account_id" => account_id.clone(),
+            "course_id" => course_id.clone(),
+        };
+        match value {
+            0 => self.database.unvote_course2(filter)?,
+            _ => {
+                let update = doc! {
+                    "$set" => {
+                        "account_id" => account_id,
+                        "course_id" => course_id.clone(),
+                        "value" => value,
+                        "timestamp" => now,
+                    }
+                };
+                self.database.vote_course2(filter, update)?
+            }
+        }
+        let filter = doc! {
+            "course_id" => course_id.clone(),
+        };
+        let projection = doc! {
+            "course_id" => course_id.clone(),
+            "value" => 1,
+            "timestamp" => 1,
+        };
+        let votes = self.database.get_votes_course2(filter, projection)?;
+        let vote_value: i32 = votes.iter().fold(0, |acc, vote| acc + vote.get_value());
+        let filter = doc! {
+            "_id" => course_id,
+        };
+        let update = doc! {
+            "$set" => {
+                "votes" => vote_value,
+            }
+        };
+        self.database.update_course2(filter, update)?;
+        Ok(())
     }
 
     pub fn post_course2_meta(

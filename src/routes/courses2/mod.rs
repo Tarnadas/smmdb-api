@@ -5,6 +5,7 @@ pub mod meta;
 mod post;
 mod put;
 pub mod thumbnail;
+mod vote;
 
 use actix_web::{dev, web};
 pub use delete::*;
@@ -21,4 +22,5 @@ pub fn service() -> impl dev::HttpServiceFactory {
         .service(download::download_course)
         .service(thumbnail::get_thumbnail)
         .service(meta::post_meta)
+        .service(vote::vote_course)
 }

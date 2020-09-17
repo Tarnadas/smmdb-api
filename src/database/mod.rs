@@ -6,12 +6,17 @@ use crate::{
     minhash::{LshIndex, MinHash},
     routes::courses2::meta::PostCourse2MetaError,
     session::AuthSession,
+    Vote,
 };
 
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use mongodb::{
-    coll::{options::FindOptions, results::InsertOneResult, Collection},
+    coll::{
+        options::{FindOptions, UpdateOptions},
+        results::InsertOneResult,
+        Collection,
+    },
     db::ThreadedDatabase,
     Client, ThreadedClient,
 };
@@ -29,6 +34,7 @@ pub struct Database {
     courses2: Collection,
     course2_data: Collection,
     accounts: Collection,
+    votes: Collection,
 }
 
 impl Database {
@@ -56,8 +62,13 @@ impl Database {
         let accounts = client
             .db("admin")
             .collection(Collections::Accounts.as_str());
+        let votes = client.db("admin").collection(Collections::Votes.as_str());
 
-        if let Err(err) = Database::generate_indexes(&courses2) {
+        if let Err(err) = Database::generate_course2_indexes(&courses2) {
+            println!("{}", err);
+        }
+
+        if let Err(err) = Database::generate_votes_indexes(&votes) {
             println!("{}", err);
         }
 
@@ -67,12 +78,13 @@ impl Database {
             courses2,
             course2_data,
             accounts,
+            votes,
         };
         Migration::run(&database);
         database
     }
 
-    fn generate_indexes(courses2: &Collection) -> Result<(), mongodb::error::Error> {
+    fn generate_course2_indexes(courses2: &Collection) -> Result<(), mongodb::error::Error> {
         let indexes = vec![
             doc! {
                 "last_modified": -1,
@@ -99,6 +111,24 @@ impl Database {
         for index in indexes {
             if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
                 courses2.create_index(index, None)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn generate_votes_indexes(votes: &Collection) -> Result<(), mongodb::error::Error> {
+        let indexes = vec![doc! {
+            "account_id": 1,
+            "course_id": 1,
+        }];
+        let listed_indexes: Vec<OrderedDocument> = votes
+            .list_indexes()?
+            .map(|item| -> Result<OrderedDocument, mongodb::Error> { Ok(item?) })
+            .filter_map(Result::ok)
+            .collect();
+        for index in indexes {
+            if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
+                votes.create_index(index, None)?;
             }
         }
         Ok(())
@@ -249,6 +279,15 @@ impl Database {
         Ok(())
     }
 
+    pub fn update_course2(
+        &self,
+        filter: OrderedDocument,
+        update: OrderedDocument,
+    ) -> Result<(), mongodb::error::Error> {
+        self.courses2.update_one(filter, update, None)?;
+        Ok(())
+    }
+
     pub fn delete_course2(
         &self,
         course_id: String,
@@ -261,6 +300,52 @@ impl Database {
         } else {
             Ok(())
         }
+    }
+
+    pub fn vote_course2(
+        &self,
+        filter: OrderedDocument,
+        update: OrderedDocument,
+    ) -> Result<(), mongodb::error::Error> {
+        self.votes.update_one(
+            filter,
+            update,
+            Some(UpdateOptions {
+                upsert: Some(true),
+                ..UpdateOptions::default()
+            }),
+        )?;
+        Ok(())
+    }
+
+    pub fn unvote_course2(&self, filter: OrderedDocument) -> Result<(), mongodb::error::Error> {
+        self.votes.delete_one(filter, None)?;
+        Ok(())
+    }
+
+    pub fn get_votes_course2(
+        &self,
+        filter: OrderedDocument,
+        projection: OrderedDocument,
+    ) -> Result<Vec<Vote>, mongodb::error::Error> {
+        self.votes
+            .find(
+                Some(filter),
+                Some(FindOptions {
+                    projection: Some(projection),
+                    ..FindOptions::default()
+                }),
+            )?
+            .map(|item| {
+                item.map(|item| -> Result<Vote, serde_json::Error> { item.try_into() })
+                    .map_err(|err| {
+                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
+                    })?
+                    .map_err(|err| {
+                        mongodb::Error::ResponseError(format!("get_votes_course2 failed: {}", err))
+                    })
+            })
+            .collect()
     }
 
     pub fn find_courses2(

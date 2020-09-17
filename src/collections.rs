@@ -4,6 +4,7 @@ pub enum Collections {
     Courses2,
     Course2Data,
     Accounts,
+    Votes,
 }
 
 impl Collections {
@@ -14,6 +15,7 @@ impl Collections {
             Collections::Courses2 => "courses2",
             Collections::Course2Data => "course2Data",
             Collections::Accounts => "accounts",
+            Collections::Votes => "votes",
         }
     }
 }
