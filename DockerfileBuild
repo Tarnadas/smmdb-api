@@ -19,7 +19,7 @@ RUN set -eux; \
     url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
     wget "$url"; \
     chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --default-toolchain nightly-2020-06-23 --profile minimal; \
+    ./rustup-init -y --no-modify-path --default-toolchain nightly-2020-08-12 --profile minimal; \
     rm rustup-init; \
     chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
     rustup --version; \
@@ -37,14 +37,27 @@ RUN cd / && \
 WORKDIR /smmdb
 
 COPY ./Cargo.toml ./Cargo.toml
+COPY ./smmdb/Cargo.toml ./smmdb/Cargo.toml
+COPY ./smmdb-auth/Cargo.toml ./smmdb-auth/Cargo.toml
+COPY ./smmdb-common/Cargo.toml ./smmdb-common/Cargo.toml
+COPY ./smmdb-db/Cargo.toml ./smmdb-db/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 RUN rm ./src/main.rs && \
-    mkdir -p ./src && \
-    echo "fn main() {}" >> ./src/main.rs
+    mkdir -p ./smmdb/src && \
+    echo "fn main() {}" >> ./smmdb/src/main.rs && \
+    mkdir -p ./smmdb-auth/src && \
+    touch ./smmdb-auth/src/lib.rs && \
+    mkdir -p ./smmdb-common/src && \
+    touch ./smmdb-common/src/lib.rs && \
+    mkdir -p ./smmdb-db/src && \
+    touch ./smmdb-db/src/lib.rs
 
 RUN cargo fetch
 RUN cargo build --release
-RUN rm src/*.rs
+RUN rm ./smmdb/src/*.rs && \
+    rm ./smmdb-auth/src/*.rs && \
+    rm ./smmdb-common/src/*.rs && \
+    rm ./smmdb-db/src/*.rs
 
 COPY ./src ./src
 COPY ./swagger ./swagger
