@@ -1,8 +1,5 @@
 use crate::{
     config::GOOGLE_CLIENT_ID,
-    course::{Course, CourseResponse},
-    course2::{self, Course2, Course2Response, Course2SimilarityError},
-    minhash::{LshIndex, MinHash, PermGen},
     routes::{
         courses,
         courses2::{
@@ -14,7 +11,6 @@ use crate::{
         },
     },
     session::AuthReq,
-    Vote,
 };
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
@@ -26,6 +22,10 @@ use image::{
 };
 use rayon::prelude::*;
 use smmdb_auth::{Account, AccountReq, AuthSession};
+use smmdb_common::{
+    Course, Course2, Course2Response, Course2SimilarityError, CourseResponse, Difficulty, LshIndex,
+    MinHash, PermGen, Vote,
+};
 use smmdb_db::Database;
 use std::{
     convert::TryInto,
@@ -301,7 +301,7 @@ impl Data {
         &self,
         mut courses: Vec<smmdb_lib::Course2>,
         account: &Account,
-        difficulty: Option<course2::Difficulty>,
+        difficulty: Option<Difficulty>,
     ) -> Result<PutCourses2Response, courses2::PutCourses2Error> {
         let lsh_index = self.lsh_index.clone();
         let response = Arc::new(Mutex::new(PutCourses2Response::new()));
@@ -390,7 +390,7 @@ impl Data {
         &self,
         course_id: String,
         course_oid: ObjectId,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         let query = doc! {
             "_id" => course_oid
         };
@@ -402,7 +402,7 @@ impl Data {
         account_id: ObjectId,
         course_id: ObjectId,
         value: i32,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -462,7 +462,7 @@ impl Data {
     pub fn post_course2_meta(
         &self,
         course_id: ObjectId,
-        difficulty: Option<course2::Difficulty>,
+        difficulty: Option<Difficulty>,
     ) -> Result<(), PostCourse2MetaError> {
         let filter = doc! {
             "_id" => course_id.clone()
@@ -497,7 +497,7 @@ impl Data {
         &self,
         account: AccountReq,
         session: AuthSession,
-    ) -> Result<Account, mongodb::error::Error> {
+    ) -> Result<Account, mongodb::Error> {
         match Data::find_account(&self.database, account.as_find()) {
             Some(account) => {
                 let filter = doc! {
@@ -541,7 +541,7 @@ impl Data {
         }
     }
 
-    pub fn delete_account_session(&self, account: Account) -> Result<(), mongodb::error::Error> {
+    pub fn delete_account_session(&self, account: Account) -> Result<(), mongodb::Error> {
         self.database.delete_account_session(account.get_id())
     }
 

@@ -121,7 +121,7 @@ pub enum DownloadCourse2Error {
     #[fail(display = "Object id invalid.\nReason: {}", _0)]
     MongoOid(bson::oid::Error),
     #[fail(display = "[DownloadCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
     #[fail(display = "[DownloadCourse2Error::ValueAccessError]: {}", _0)]
     ValueAccessError(ValueAccessError),
 }
@@ -138,8 +138,8 @@ impl From<bson::oid::Error> for DownloadCourse2Error {
     }
 }
 
-impl From<mongodb::error::Error> for DownloadCourse2Error {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for DownloadCourse2Error {
+    fn from(err: mongodb::Error) -> Self {
         DownloadCourse2Error::Mongo(err)
     }
 }

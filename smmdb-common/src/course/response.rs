@@ -1,4 +1,5 @@
-use super::Course;
+use crate::Course;
+
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;
 use smmdb_lib::proto::SMMCourse::{

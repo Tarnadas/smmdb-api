@@ -2,5 +2,6 @@
 members = [
     "smmdb",
     "smmdb-auth",
+    "smmdb-common",
     "smmdb-db"
 ]

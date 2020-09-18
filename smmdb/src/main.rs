@@ -5,18 +5,10 @@ extern crate bson;
 extern crate failure;
 
 mod config;
-mod course;
-mod course2;
 mod migration;
-mod minhash;
 mod routes;
 mod server;
 mod session;
-mod vote;
-
-pub use course::Course;
-pub use course2::Course2;
-pub use vote::Vote;
 
 use migration::Migration;
 use server::Server;

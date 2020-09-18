@@ -1,12 +1,12 @@
 mod response;
 
-pub use self::response::CourseResponse;
+pub use response::CourseResponse;
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, ValueAccessError};
+use serde::Serialize;
 use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
-use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

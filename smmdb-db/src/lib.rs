@@ -78,7 +78,7 @@ impl Database {
         }
     }
 
-    fn generate_course2_indexes(courses2: &Collection) -> Result<(), mongodb::error::Error> {
+    fn generate_course2_indexes(courses2: &Collection) -> Result<(), mongodb::Error> {
         let indexes = vec![
             doc! {
                 "last_modified": -1,
@@ -110,7 +110,7 @@ impl Database {
         Ok(())
     }
 
-    fn generate_votes_indexes(votes: &Collection) -> Result<(), mongodb::error::Error> {
+    fn generate_votes_indexes(votes: &Collection) -> Result<(), mongodb::Error> {
         let indexes = vec![doc! {
             "account_id": 1,
             "course_id": 1,
@@ -154,7 +154,7 @@ impl Database {
         data: Bson,
         thumb: Bson,
         thumb_encrypted: Bson,
-    ) -> Result<ObjectId, mongodb::error::Error> {
+    ) -> Result<ObjectId, mongodb::Error> {
         let insert_res = self.courses2.insert_one(doc_meta, None)?;
         let inserted_id = insert_res
             .inserted_id
@@ -173,7 +173,7 @@ impl Database {
         &self,
         doc: OrderedDocument,
         projection: OrderedDocument,
-    ) -> Result<Option<OrderedDocument>, mongodb::error::Error> {
+    ) -> Result<Option<OrderedDocument>, mongodb::Error> {
         self.course2_data.find_one(
             Some(doc),
             Some(FindOptions {
@@ -188,7 +188,7 @@ impl Database {
         course_id: ObjectId,
         size: String,
         data: Vec<u8>,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         let data = Bson::Binary(BinarySubtype::Generic, data);
         let filter = doc! {
             "_id" => course_id
@@ -206,7 +206,7 @@ impl Database {
         &self,
         filter: OrderedDocument,
         update: OrderedDocument,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         self.courses2.update_one(filter, update, None)?;
         Ok(())
     }
@@ -215,7 +215,7 @@ impl Database {
         &self,
         course_id: String,
         doc: OrderedDocument,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         self.courses2.delete_one(doc.clone(), None)?;
         let res = self.course2_data.delete_one(doc, None)?;
         if res.deleted_count == 0 {
@@ -229,7 +229,7 @@ impl Database {
         &self,
         filter: OrderedDocument,
         update: OrderedDocument,
-    ) -> Result<(), mongodb::error::Error> {
+    ) -> Result<(), mongodb::Error> {
         self.votes.update_one(
             filter,
             update,
@@ -241,7 +241,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn unvote_course2(&self, filter: OrderedDocument) -> Result<(), mongodb::error::Error> {
+    pub fn unvote_course2(&self, filter: OrderedDocument) -> Result<(), mongodb::Error> {
         self.votes.delete_one(filter, None)?;
         Ok(())
     }
@@ -305,10 +305,7 @@ impl Database {
         self.accounts.update_one(filter, update, None)
     }
 
-    pub fn delete_account_session(
-        &self,
-        account_id: &ObjectId,
-    ) -> Result<(), mongodb::error::Error> {
+    pub fn delete_account_session(&self, account_id: &ObjectId) -> Result<(), mongodb::Error> {
         let filter = doc! {
             "_id" => account_id.clone()
         };
@@ -325,7 +322,7 @@ impl Database {
         &self,
         course_id: ObjectId,
         course: OrderedDocument,
-    ) -> Result<Vec<u8>, mongodb::error::Error> {
+    ) -> Result<Vec<u8>, mongodb::Error> {
         use std::io::prelude::*;
 
         let bson_course = course.get("data_encrypted").unwrap();
@@ -356,7 +353,7 @@ impl Database {
         &self,
         course_id: ObjectId,
         course: OrderedDocument,
-    ) -> Result<Vec<u8>, mongodb::error::Error> {
+    ) -> Result<Vec<u8>, mongodb::Error> {
         use std::io::prelude::*;
 
         let bson_course = course.get("data_encrypted").unwrap();

@@ -1,10 +1,11 @@
-use crate::{course2::Difficulty, server::ServerData};
+use crate::server::ServerData;
 
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, post, web, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
 use serde::Deserialize;
 use smmdb_auth::Identity;
+use smmdb_common::Difficulty;
 
 #[derive(Debug, Deserialize)]
 pub struct PostCourse2Meta {
@@ -37,7 +38,7 @@ pub enum PostCourse2MetaError {
     #[fail(display = "Course with ID {} not found", _0)]
     ObjectIdUnknown(String),
     #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
     #[fail(display = "[PutCourses2Error::MongoCollWriteException]: {}", _0)]
     MongoColl(mongodb::coll::error::WriteException),
     #[fail(display = "")]
@@ -53,8 +54,8 @@ impl From<bson::oid::Error> for PostCourse2MetaError {
     }
 }
 
-impl From<mongodb::error::Error> for PostCourse2MetaError {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for PostCourse2MetaError {
+    fn from(err: mongodb::Error) -> Self {
         PostCourse2MetaError::Mongo(err)
     }
 }

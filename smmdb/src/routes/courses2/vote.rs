@@ -42,7 +42,7 @@ pub enum VoteCourse2Error {
     #[fail(display = "Course with ID {} not found", _0)]
     ObjectIdUnknown(String),
     #[fail(display = "[VoteCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
     #[fail(display = "value not within allowed range: {}", _0)]
     BadValue(i32),
     // #[fail(display = "")]
@@ -58,8 +58,8 @@ impl From<bson::oid::Error> for VoteCourse2Error {
     }
 }
 
-impl From<mongodb::error::Error> for VoteCourse2Error {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for VoteCourse2Error {
+    fn from(err: mongodb::Error) -> Self {
         VoteCourse2Error::Mongo(err)
     }
 }

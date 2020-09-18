@@ -1,7 +1,4 @@
-use crate::{
-    course2::{Course2Response, Course2SimilarityError, Difficulty},
-    server::ServerData,
-};
+use crate::server::ServerData;
 
 use actix_http::body::Body;
 use actix_web::{
@@ -15,6 +12,7 @@ use futures::{self, StreamExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
 use smmdb_auth::Identity;
+use smmdb_common::{Course2Response, Course2SimilarityError, Difficulty};
 use std::io;
 
 #[derive(Debug, Deserialize)]
@@ -62,7 +60,7 @@ pub enum PutCourses2Error {
     #[fail(display = "[PutCourses2Error::ThumbnailMissing]: course is missing thumbnail")]
     ThumbnailMissing,
     #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
 }
 
 impl From<io::Error> for PutCourses2Error {
@@ -89,8 +87,8 @@ impl From<serde_json::Error> for PutCourses2Error {
     }
 }
 
-impl From<mongodb::error::Error> for PutCourses2Error {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for PutCourses2Error {
+    fn from(err: mongodb::Error) -> Self {
         PutCourses2Error::Mongo(err)
     }
 }

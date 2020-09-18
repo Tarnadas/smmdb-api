@@ -2585,13 +2585,11 @@ dependencies = [
  "awc",
  "brotli2",
  "bson",
- "chrono",
  "env_logger",
  "failure",
  "flate2",
  "futures 0.3.5",
  "image",
- "itertools",
  "mongodb_cwal",
  "num_cpus",
  "protobuf",
@@ -2603,9 +2601,9 @@ dependencies = [
  "serde_qs",
  "smmdb 1.2.0",
  "smmdb-auth",
+ "smmdb-common",
  "smmdb-db",
  "tar",
- "twox-hash",
 ]
 
 [[package]]
@@ -2655,6 +2653,19 @@ dependencies = [
  "futures 0.3.5",
  "rand 0.7.3",
  "serde",
+]
+
+[[package]]
+name = "smmdb-common"
+version = "0.1.0"
+dependencies = [
+ "bson",
+ "chrono",
+ "serde",
+ "serde_json",
+ "smmdb 1.2.0",
+ "smmdb-auth",
+ "twox-hash",
 ]
 
 [[package]]

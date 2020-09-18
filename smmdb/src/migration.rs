@@ -2,14 +2,13 @@
 
 use super::Database;
 
-use crate::course2::Course2;
-
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
+use smmdb_common::Course2;
 use smmdb_db::DatabaseError;
 use std::{
     convert::TryInto,
@@ -73,7 +72,7 @@ impl Migration {
         println!("Fixed {} SMM2 courses", fixed_count.lock().unwrap());
     }
 
-    fn fix_course2(database: &Database, course_id: &Bson) -> Result<(), mongodb::error::Error> {
+    fn fix_course2(database: &Database, course_id: &Bson) -> Result<(), mongodb::Error> {
         use std::io::prelude::*;
 
         let doc = database
@@ -124,10 +123,7 @@ impl Migration {
         println!("Converted {} SMM2 course data", fixed_count.lock().unwrap());
     }
 
-    fn fix_course2_data(
-        database: &Database,
-        course: Course2,
-    ) -> Result<bool, mongodb::error::Error> {
+    fn fix_course2_data(database: &Database, course: Course2) -> Result<bool, mongodb::Error> {
         use std::io::prelude::*;
 
         let doc = database
@@ -198,7 +194,7 @@ impl Migration {
     fn add_course2_data_protobuf(
         database: &Database,
         course: Course2,
-    ) -> Result<bool, mongodb::error::Error> {
+    ) -> Result<bool, mongodb::Error> {
         use std::io::prelude::*;
 
         let doc = database
@@ -264,10 +260,7 @@ impl Migration {
         );
     }
 
-    fn add_course2_data_br(
-        database: &Database,
-        course: Course2,
-    ) -> Result<bool, mongodb::error::Error> {
+    fn add_course2_data_br(database: &Database, course: Course2) -> Result<bool, mongodb::Error> {
         use std::io::prelude::*;
 
         let doc = database
@@ -315,7 +308,7 @@ impl Migration {
     fn get_courses2_result(
         database: &Database,
         query: Vec<OrderedDocument>,
-    ) -> Result<Vec<Result<Course2, DatabaseError>>, mongodb::error::Error> {
+    ) -> Result<Vec<Result<Course2, DatabaseError>>, mongodb::Error> {
         let cursor = database.courses2.aggregate(query, None)?;
 
         let courses: Vec<Result<Course2, DatabaseError>> = cursor

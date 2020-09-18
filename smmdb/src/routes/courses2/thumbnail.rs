@@ -71,7 +71,7 @@ pub enum GetCourse2ThumbnailError {
     #[fail(display = "Object id invalid.\nReason: {}", _0)]
     MongoOid(bson::oid::Error),
     #[fail(display = "[GetCourse2ThumbnailError::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
     #[fail(display = "[GetCourse2ThumbnailError::Image]: {}", _0)]
     Image(image::ImageError),
 }
@@ -82,8 +82,8 @@ impl From<bson::oid::Error> for GetCourse2ThumbnailError {
     }
 }
 
-impl From<mongodb::error::Error> for GetCourse2ThumbnailError {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for GetCourse2ThumbnailError {
+    fn from(err: mongodb::Error) -> Self {
         GetCourse2ThumbnailError::Mongo(err)
     }
 }

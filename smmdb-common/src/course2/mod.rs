@@ -1,13 +1,13 @@
 mod response;
 
-pub use self::response::Course2Response;
+pub use response::Course2Response;
 
-use crate::minhash::{MinHash, PermGen};
+use crate::{Difficulty, MinHash, PermGen};
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
-use smmdb_lib::proto::SMM2Course::SMM2Course;
 use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
+use smmdb_lib::proto::SMM2Course::SMM2Course;
 use std::{convert::TryFrom, fmt};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -111,26 +111,5 @@ impl fmt::Display for Course2SimilarityError {
             Ok(res) => write!(f, "{}", res),
             Err(_) => fmt::Result::Err(fmt::Error),
         }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Difficulty {
-    Easy,
-    Normal,
-    Expert,
-    SuperExpert,
-}
-
-impl From<Difficulty> for Bson {
-    fn from(difficulty: Difficulty) -> Bson {
-        Bson::String(
-            serde_json::to_value(difficulty)
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .to_string(),
-        )
     }
 }

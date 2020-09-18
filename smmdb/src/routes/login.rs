@@ -95,7 +95,7 @@ enum LoginError {
     #[fail(display = "[AccountConvert]: {}", _0)]
     AccountConvert(AccountConvertError),
     #[fail(display = "[MongodbError]: {}", _0)]
-    MongodbError(mongodb::error::Error),
+    MongodbError(mongodb::Error),
 }
 
 impl From<JsonPayloadError> for LoginError {
@@ -116,8 +116,8 @@ impl From<AccountConvertError> for LoginError {
     }
 }
 
-impl From<mongodb::error::Error> for LoginError {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for LoginError {
+    fn from(err: mongodb::Error) -> Self {
         LoginError::MongodbError(err)
     }
 }

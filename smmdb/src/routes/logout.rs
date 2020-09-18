@@ -26,11 +26,11 @@ async fn logout(
 #[derive(Fail, Debug)]
 enum LogoutError {
     #[fail(display = "Mongodb error: {}", _0)]
-    MongodbError(mongodb::error::Error),
+    MongodbError(mongodb::Error),
 }
 
-impl From<mongodb::error::Error> for LogoutError {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for LogoutError {
+    fn from(err: mongodb::Error) -> Self {
         LogoutError::MongodbError(err)
     }
 }

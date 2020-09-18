@@ -1,5 +1,4 @@
 use crate::{
-    course2::Difficulty,
     server::{Data, ServerData},
     Database,
 };
@@ -10,6 +9,7 @@ use actix_web::{
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_qs::actix::QsQuery;
+use smmdb_common::Difficulty;
 use std::{
     convert::{TryFrom, TryInto},
     io,
@@ -310,7 +310,7 @@ pub enum GetCourses2Error {
     #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
     SerdeJson(serde_json::Error),
     #[fail(display = "[GetCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
 }
 
 impl From<serde_json::Error> for GetCourses2Error {
@@ -319,8 +319,8 @@ impl From<serde_json::Error> for GetCourses2Error {
     }
 }
 
-impl From<mongodb::error::Error> for GetCourses2Error {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for GetCourses2Error {
+    fn from(err: mongodb::Error) -> Self {
         GetCourses2Error::Mongo(err)
     }
 }

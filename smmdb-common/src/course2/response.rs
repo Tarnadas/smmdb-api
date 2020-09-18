@@ -1,4 +1,4 @@
-use super::{Course2, Difficulty};
+use crate::{Course2, Difficulty};
 
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;

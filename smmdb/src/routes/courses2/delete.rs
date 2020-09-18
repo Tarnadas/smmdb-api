@@ -28,7 +28,7 @@ pub enum DeleteCourse2Error {
     #[fail(display = "Course with ID {} not found", _0)]
     ObjectIdUnknown(String),
     #[fail(display = "[DeleteCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::error::Error),
+    Mongo(mongodb::Error),
     #[fail(display = "")]
     Unauthorized,
 }
@@ -42,8 +42,8 @@ impl From<bson::oid::Error> for DeleteCourse2Error {
     }
 }
 
-impl From<mongodb::error::Error> for DeleteCourse2Error {
-    fn from(err: mongodb::error::Error) -> Self {
+impl From<mongodb::Error> for DeleteCourse2Error {
+    fn from(err: mongodb::Error) -> Self {
         DeleteCourse2Error::Mongo(err)
     }
 }
