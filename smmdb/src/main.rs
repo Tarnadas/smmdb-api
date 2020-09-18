@@ -15,9 +15,9 @@ mod server;
 mod session;
 mod vote;
 
+pub use account::Identity;
 pub use course::Course;
 pub use course2::Course2;
-pub use session::Identity;
 pub use vote::Vote;
 
 use migration::Migration;

@@ -1,8 +1,4 @@
-mod identity;
-
-pub use identity::*;
-
-use crate::server::ServerData;
+use crate::{server::ServerData, Identity};
 
 use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
