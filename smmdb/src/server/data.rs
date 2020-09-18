@@ -1,5 +1,5 @@
 use crate::{
-    account::{Account, AccountReq},
+    account::{Account, AccountReq, AuthSession},
     config::GOOGLE_CLIENT_ID,
     course::{Course, CourseResponse},
     course2::{self, Course2, Course2Response, Course2SimilarityError},
@@ -14,7 +14,7 @@ use crate::{
             PutCourses2Response,
         },
     },
-    session::{AuthReq, AuthSession},
+    session::AuthReq,
     Vote,
 };
 

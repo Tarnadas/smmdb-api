@@ -1,7 +1,6 @@
 use crate::{
-    account::{AccountConvertError, AccountReq, AccountRes},
+    account::{AccountConvertError, AccountReq, AccountRes, AuthSession, IdInfo},
     server::ServerData,
-    session::AuthSession,
     Identity,
 };
 
@@ -27,24 +26,6 @@ struct Login {
 struct TokenObj {
     id_token: String,
     expires_at: i64,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct IdInfo {
-    pub iss: String,
-    pub sub: String,
-    pub azp: String,
-    pub aud: String,
-    pub iat: String,
-    pub exp: String,
-    pub hd: Option<String>,
-    pub email: Option<String>,
-    pub email_verified: Option<String>,
-    pub name: Option<String>,
-    pub picture: Option<String>,
-    pub given_name: Option<String>,
-    pub family_name: Option<String>,
-    pub locale: Option<String>,
 }
 
 pub fn service() -> impl dev::HttpServiceFactory {

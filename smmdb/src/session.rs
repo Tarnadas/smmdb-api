@@ -1,4 +1,4 @@
-use crate::{server::ServerData, Identity};
+use crate::{account::AuthSession, server::ServerData, Identity};
 
 use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
@@ -10,50 +10,11 @@ use actix_web::{
 };
 use bson::{oid::ObjectId, ordered::OrderedDocument};
 use futures::future::{ok, Future, Ready};
-use serde::Serialize;
 use std::{
     convert::TryFrom,
     pin::Pin,
     task::{Context, Poll},
 };
-
-#[derive(Clone, Debug, Serialize)]
-pub struct AuthSession {
-    id_token: String,
-    pub expires_at: i64,
-}
-
-impl AuthSession {
-    pub fn new(id_token: String, expires_at: i64) -> Self {
-        AuthSession {
-            id_token,
-            expires_at,
-        }
-    }
-}
-
-impl From<OrderedDocument> for AuthSession {
-    fn from(document: OrderedDocument) -> Self {
-        AuthSession {
-            id_token: document
-                .get_str("id_token")
-                .expect("[Session::from] id_token unwrap failed")
-                .to_string(),
-            expires_at: document
-                .get_i64("expires_at")
-                .expect("[Session::from] expires_at unwrap failed"),
-        }
-    }
-}
-
-impl Into<OrderedDocument> for AuthSession {
-    fn into(self) -> OrderedDocument {
-        doc! {
-            "id_token" => self.id_token,
-            "expires_at" => self.expires_at,
-        }
-    }
-}
 
 pub struct Auth;
 
@@ -99,7 +60,7 @@ where
         let data: Option<&Data<ServerData>> = req.app_data();
         if let Some(data) = data {
             if let Ok(auth_req) = AuthReq::try_from(session) {
-                let expires_at = auth_req.session.as_ref().unwrap().expires_at;
+                let expires_at = auth_req.session.as_ref().unwrap().get_expires_at();
                 if let Some(account) = data.get_account_from_auth(auth_req) {
                     if !account.is_expired(expires_at) {
                         Identity::set_identity(account, &mut req);
@@ -140,10 +101,7 @@ impl TryFrom<Session> for AuthReq {
                 return Ok(AuthReq {
                     account_id,
                     apikey: None,
-                    session: Some(AuthSession {
-                        id_token,
-                        expires_at,
-                    }),
+                    session: Some(AuthSession::new(id_token, expires_at)),
                 });
             }
         }

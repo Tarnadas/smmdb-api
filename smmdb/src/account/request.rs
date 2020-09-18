@@ -1,4 +1,4 @@
-use crate::routes::login::IdInfo;
+use crate::account::IdInfo;
 
 use bson::ordered::OrderedDocument;
 use serde::Serialize;
@@ -6,9 +6,9 @@ use std::convert::TryFrom;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct AccountReq {
-    pub(crate) googleid: String,
-    pub(crate) username: String,
-    pub(crate) email: String,
+    pub googleid: String,
+    pub username: String,
+    pub email: String,
 }
 
 impl AccountReq {

@@ -1,12 +1,12 @@
+mod auth;
 mod identity;
 mod request;
 mod response;
 
+pub use auth::*;
 pub use identity::*;
 pub use request::*;
 pub use response::*;
-
-use crate::session::AuthSession;
 
 use bson::{oid::ObjectId, ordered::OrderedDocument};
 use chrono::offset::Utc;
@@ -92,7 +92,7 @@ impl Account {
     pub fn is_expired(&self, expires_at: i64) -> bool {
         if let Some(session) = &self.session {
             let now = Utc::now().timestamp_millis();
-            session.expires_at <= now && session.expires_at == expires_at
+            session.get_expires_at() <= now && session.get_expires_at() == expires_at
         } else {
             true
         }
