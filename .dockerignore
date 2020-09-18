@@ -1,1 +1,6 @@
 target/
+.travis.yml
+cargo-timing*
+Dockerfile*
+docker-compose*
+deploy.sh

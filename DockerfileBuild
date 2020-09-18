@@ -59,8 +59,7 @@ RUN rm ./smmdb/src/*.rs && \
     rm ./smmdb-common/src/*.rs && \
     rm ./smmdb-db/src/*.rs
 
-COPY ./src ./src
-COPY ./swagger ./swagger
+COPY . .
 
 RUN rm ./target/release/deps/smmdb*
 RUN cargo build --release
