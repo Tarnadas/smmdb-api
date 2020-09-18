@@ -2,7 +2,7 @@
 
 use super::Database;
 
-use crate::{course2::Course2, database::DatabaseError};
+use crate::course2::Course2;
 
 use brotli2::{read::BrotliEncoder, CompressParams};
 use bson::{ordered::OrderedDocument, spec::BinarySubtype, Bson};
@@ -10,6 +10,7 @@ use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
+use smmdb_database::DatabaseError;
 use std::{
     convert::TryInto,
     sync::{Arc, Mutex},

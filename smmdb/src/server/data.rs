@@ -3,7 +3,6 @@ use crate::{
     config::GOOGLE_CLIENT_ID,
     course::{Course, CourseResponse},
     course2::{self, Course2, Course2Response, Course2SimilarityError},
-    database::Database,
     minhash::{LshIndex, MinHash, PermGen},
     routes::{
         courses,
@@ -27,6 +26,7 @@ use image::{
     load_from_memory, DynamicImage,
 };
 use rayon::prelude::*;
+use smmdb_database::Database;
 use std::{
     convert::TryInto,
     io,

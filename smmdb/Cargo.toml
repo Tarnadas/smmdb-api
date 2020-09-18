@@ -30,6 +30,7 @@ regex = "1"
 serde = "1"
 serde_json = "1"
 serde_qs = { version = "0.7", features = ["actix"], git = "https://github.com/Tarnadas/serde_qs.git" }
+smmdb-database = { path = "../smmdb-database" }
 smmdb-lib = { version = "1", package = "smmdb" }
 tar = "0.4"
 twox-hash = "1"

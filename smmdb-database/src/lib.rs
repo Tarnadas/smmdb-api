@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate bson;
+
 mod collections;
 
 use collections::Collections;
@@ -22,7 +25,7 @@ pub use error::*;
 
 pub struct Database {
     courses: Collection,
-    course_data: Collection,
+    _course_data: Collection,
     // TODO non pub
     pub courses2: Collection,
     pub course2_data: Collection,
@@ -43,7 +46,7 @@ impl Database {
         let client = Client::with_uri(&format!("mongodb://{}:27017", host))
             .expect("Failed to connect to MongoDB");
         let courses = client.db("admin").collection(Collections::Courses.as_str());
-        let course_data = client
+        let _course_data = client
             .db("admin")
             .collection(Collections::CourseData.as_str());
         let courses2 = client
@@ -67,7 +70,7 @@ impl Database {
 
         Database {
             courses,
-            course_data,
+            _course_data,
             courses2,
             course2_data,
             accounts,

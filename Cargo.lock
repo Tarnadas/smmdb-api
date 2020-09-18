@@ -2602,6 +2602,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "smmdb 1.2.0",
+ "smmdb-database",
  "tar",
  "twox-hash",
 ]
@@ -2639,6 +2640,17 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "zip",
+]
+
+[[package]]
+name = "smmdb-database"
+version = "0.1.0"
+dependencies = [
+ "brotli2",
+ "bson",
+ "mongodb_cwal",
+ "serde_json",
+ "smmdb 1.2.0",
 ]
 
 [[package]]

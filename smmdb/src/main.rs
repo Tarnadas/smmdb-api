@@ -8,7 +8,6 @@ mod account;
 mod config;
 mod course;
 mod course2;
-mod database;
 mod migration;
 mod minhash;
 mod routes;
@@ -21,10 +20,10 @@ pub use course2::Course2;
 pub use session::Identity;
 pub use vote::Vote;
 
-use database::Database;
 use migration::Migration;
 use server::Server;
 
+use smmdb_database::Database;
 use std::io;
 
 #[actix_rt::main]

@@ -1,4 +1,3 @@
-use crate::database::Database;
 use crate::routes::{courses, courses2, index, login, logout, swagger};
 use crate::session::Auth;
 
@@ -11,6 +10,7 @@ use actix_web::{
     middleware::{Compress, Logger},
     App, HttpServer,
 };
+use smmdb_database::Database;
 use std::{io, sync::Arc};
 
 mod data;
