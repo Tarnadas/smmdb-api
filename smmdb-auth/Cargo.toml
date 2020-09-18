@@ -13,12 +13,3 @@ failure = "0.1"
 futures = "0.3"
 rand = "0.7"
 serde = "1"
-
-[profile]
-[profile.release]
-debug = false
-# lto = true
-codegen-units = 1
-
-[profile.dev]
-opt-level = 1

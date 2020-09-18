@@ -33,12 +33,3 @@ smmdb-common = { path = "../smmdb-common" }
 smmdb-db = { path = "../smmdb-db" }
 smmdb-lib = { version = "1", package = "smmdb" }
 tar = "0.4"
-
-[profile]
-[profile.release]
-debug = false
-# lto = true
-codegen-units = 1
-
-[profile.dev]
-opt-level = 1

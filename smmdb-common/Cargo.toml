@@ -12,12 +12,3 @@ serde_json = "1"
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-lib = { version = "1", package = "smmdb" }
 twox-hash = "1"
-
-[profile]
-[profile.release]
-debug = false
-# lto = true
-codegen-units = 1
-
-[profile.dev]
-opt-level = 1

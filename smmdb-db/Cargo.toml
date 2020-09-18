@@ -10,12 +10,3 @@ bson = "0.14"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
 serde_json = "1"
 smmdb-lib = { version = "1", package = "smmdb" }
-
-[profile]
-[profile.release]
-debug = false
-# lto = true
-codegen-units = 1
-
-[profile.dev]
-opt-level = 1
