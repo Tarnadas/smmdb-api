@@ -1,3 +1,9 @@
+#[macro_use]
+extern crate bson;
+
+#[macro_use]
+extern crate failure;
+
 mod auth;
 mod identity;
 mod request;

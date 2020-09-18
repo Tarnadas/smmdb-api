@@ -10,7 +10,7 @@ use actix_web::{
     middleware::{Compress, Logger},
     App, HttpServer,
 };
-use smmdb_database::Database;
+use smmdb_db::Database;
 use std::{io, sync::Arc};
 
 mod data;

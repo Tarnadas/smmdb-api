@@ -1,4 +1,4 @@
-use crate::{server::ServerData, Identity};
+use crate::server::ServerData;
 
 use actix_web::{
     dev::{self, HttpResponseBuilder},
@@ -6,6 +6,7 @@ use actix_web::{
     http::StatusCode,
     post, web, HttpRequest, HttpResponse,
 };
+use smmdb_auth::Identity;
 
 pub fn service() -> impl dev::HttpServiceFactory {
     web::scope("/logout").service(logout)

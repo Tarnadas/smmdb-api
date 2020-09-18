@@ -1,9 +1,9 @@
 use super::Course;
-use crate::account::Account;
+use serde::{Deserialize, Serialize};
+use smmdb_auth::Account;
 use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

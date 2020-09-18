@@ -1,8 +1,8 @@
 use super::{Course2, Difficulty};
-use crate::account::Account;
 
-use smmdb_lib::proto::SMM2Course::SMM2Course;
 use serde::{Deserialize, Serialize};
+use smmdb_auth::Account;
+use smmdb_lib::proto::SMM2Course::SMM2Course;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

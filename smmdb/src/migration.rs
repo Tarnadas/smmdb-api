@@ -10,7 +10,7 @@ use flate2::read::GzDecoder;
 use mongodb::coll::Collection;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
-use smmdb_database::DatabaseError;
+use smmdb_db::DatabaseError;
 use std::{
     convert::TryInto,
     sync::{Arc, Mutex},

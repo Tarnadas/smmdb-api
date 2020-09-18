@@ -2602,7 +2602,8 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "smmdb 1.2.0",
- "smmdb-database",
+ "smmdb-auth",
+ "smmdb-db",
  "tar",
  "twox-hash",
 ]
@@ -2643,7 +2644,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "smmdb-database"
+name = "smmdb-auth"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "bson",
+ "chrono",
+ "failure",
+ "futures 0.3.5",
+ "rand 0.7.3",
+ "serde",
+]
+
+[[package]]
+name = "smmdb-db"
 version = "0.1.0"
 dependencies = [
  "brotli2",

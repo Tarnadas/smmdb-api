@@ -1,7 +1,6 @@
 use crate::{
     course2::{Course2Response, Course2SimilarityError, Difficulty},
     server::ServerData,
-    Identity,
 };
 
 use actix_http::body::Body;
@@ -15,6 +14,7 @@ use actix_web::{
 use futures::{self, StreamExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
+use smmdb_auth::Identity;
 use std::io;
 
 #[derive(Debug, Deserialize)]

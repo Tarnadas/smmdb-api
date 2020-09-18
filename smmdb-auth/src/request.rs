@@ -1,4 +1,4 @@
-use crate::account::IdInfo;
+use crate::IdInfo;
 
 use bson::ordered::OrderedDocument;
 use serde::Serialize;

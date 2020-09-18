@@ -1,4 +1,4 @@
-use crate::{account::AuthSession, server::ServerData, Identity};
+use crate::server::ServerData;
 
 use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
@@ -10,6 +10,7 @@ use actix_web::{
 };
 use bson::{oid::ObjectId, ordered::OrderedDocument};
 use futures::future::{ok, Future, Ready};
+use smmdb_auth::{AuthSession, Identity};
 use std::{
     convert::TryFrom,
     pin::Pin,

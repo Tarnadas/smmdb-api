@@ -4,7 +4,6 @@ extern crate bson;
 #[macro_use]
 extern crate failure;
 
-mod account;
 mod config;
 mod course;
 mod course2;
@@ -15,7 +14,6 @@ mod server;
 mod session;
 mod vote;
 
-pub use account::Identity;
 pub use course::Course;
 pub use course2::Course2;
 pub use vote::Vote;
@@ -23,7 +21,7 @@ pub use vote::Vote;
 use migration::Migration;
 use server::Server;
 
-use smmdb_database::Database;
+use smmdb_db::Database;
 use std::io;
 
 #[actix_rt::main]

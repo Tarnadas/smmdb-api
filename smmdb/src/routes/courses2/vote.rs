@@ -1,9 +1,10 @@
-use crate::{server::ServerData, Identity};
+use crate::server::ServerData;
 
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, post, web, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
 use serde::Deserialize;
+use smmdb_auth::Identity;
 
 #[derive(Debug, Deserialize)]
 pub struct VoteCourse2 {

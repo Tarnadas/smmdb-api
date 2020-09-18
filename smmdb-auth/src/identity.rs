@@ -1,4 +1,4 @@
-use crate::account::Account;
+use crate::Account;
 
 use actix_http::{HttpMessage, Payload};
 use actix_web::{

@@ -1,8 +1,4 @@
-use crate::{
-    account::{AccountConvertError, AccountReq, AccountRes, AuthSession, IdInfo},
-    server::ServerData,
-    Identity,
-};
+use crate::server::ServerData;
 
 use actix_session::Session;
 use actix_web::{
@@ -14,6 +10,7 @@ use actix_web::{
 };
 use awc::{error::JsonPayloadError, SendClientRequest};
 use serde::Deserialize;
+use smmdb_auth::{AccountConvertError, AccountReq, AccountRes, AuthSession, IdInfo, Identity};
 use std::convert::TryInto;
 
 #[derive(Debug, Deserialize)]

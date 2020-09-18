@@ -1,7 +1,8 @@
-use crate::{server::ServerData, Identity};
+use crate::server::ServerData;
 
 use actix_web::{delete, error::ResponseError, http::StatusCode, web, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
+use smmdb_auth::Identity;
 
 #[delete("{course_id}")]
 pub async fn delete_course(

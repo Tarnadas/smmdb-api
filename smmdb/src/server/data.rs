@@ -1,5 +1,4 @@
 use crate::{
-    account::{Account, AccountReq, AuthSession},
     config::GOOGLE_CLIENT_ID,
     course::{Course, CourseResponse},
     course2::{self, Course2, Course2Response, Course2SimilarityError},
@@ -26,7 +25,8 @@ use image::{
     load_from_memory, DynamicImage,
 };
 use rayon::prelude::*;
-use smmdb_database::Database;
+use smmdb_auth::{Account, AccountReq, AuthSession};
+use smmdb_db::Database;
 use std::{
     convert::TryInto,
     io,

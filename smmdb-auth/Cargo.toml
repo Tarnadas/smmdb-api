@@ -1,0 +1,24 @@
+[package]
+name = "smmdb-auth"
+version = "0.1.0"
+authors = ["Mario Reder <mreder1289@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-http = { version = "2", features = [ "rustls" ] }
+actix-web = "3"
+bson = "0.14"
+chrono = "0.4"
+failure = "0.1"
+futures = "0.3"
+rand = "0.7"
+serde = "1"
+
+[profile]
+[profile.release]
+debug = false
+# lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 1
