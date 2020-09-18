@@ -61,7 +61,8 @@ RUN rm ./smmdb/src/*.rs && \
 
 COPY . .
 
-RUN rm ./target/release/deps/smmdb*
+RUN rm ./target/release/deps/smmdb* && \
+    rm ./target/release/.fingerprint/smmdb*
 RUN cargo build --release
 
 RUN mv /smmdb/target/release/smmdb /binary
