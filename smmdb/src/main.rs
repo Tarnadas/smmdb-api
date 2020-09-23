@@ -23,6 +23,6 @@ async fn main() -> io::Result<()> {
     use std::sync::Arc;
 
     let database = Database::new();
-    Migration::run(&database);
+    Migration::migrate(&database);
     Server::start(Arc::new(database)).unwrap().await
 }

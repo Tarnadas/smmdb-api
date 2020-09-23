@@ -5,6 +5,7 @@ pub enum Collections {
     Course2Data,
     Accounts,
     Votes,
+    Meta,
 }
 
 impl Collections {
@@ -16,6 +17,7 @@ impl Collections {
             Collections::Course2Data => "course2Data",
             Collections::Accounts => "accounts",
             Collections::Votes => "votes",
+            Collections::Meta => "meta",
         }
     }
 }

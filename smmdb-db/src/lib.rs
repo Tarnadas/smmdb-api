@@ -31,6 +31,7 @@ pub struct Database {
     pub course2_data: Collection,
     pub accounts: Collection,
     votes: Collection,
+    meta: Collection,
 }
 
 impl Database {
@@ -59,6 +60,7 @@ impl Database {
             .db("admin")
             .collection(Collections::Accounts.as_str());
         let votes = client.db("admin").collection(Collections::Votes.as_str());
+        let migrations = client.db("admin").collection(Collections::Meta.as_str());
 
         if let Err(err) = Database::generate_course2_indexes(&courses2) {
             println!("{}", err);
@@ -75,6 +77,7 @@ impl Database {
             course2_data,
             accounts,
             votes,
+            meta: migrations,
         }
     }
 
@@ -134,6 +137,58 @@ impl Database {
 
     pub fn get_courses2(&self, query: Vec<OrderedDocument>) -> Result<Cursor, mongodb::Error> {
         self.courses2.aggregate(query, None)
+    }
+
+    pub fn get_missing_migrations(
+        &self,
+        migrations_to_run: Vec<String>,
+    ) -> Result<Vec<String>, mongodb::Error> {
+        let doc = self
+            .meta
+            .find_one(
+                Some(doc! {
+                    "migrations" => {
+                        "$exists" => true
+                    }
+                }),
+                None,
+            )?
+            .unwrap_or(doc! {
+                "migrations" => []
+            });
+
+        let migrations: Vec<_> = if let Bson::Array(array) = doc.get("migrations").unwrap() {
+            array.iter().map(|bson| bson.to_string()).collect()
+        } else {
+            vec![]
+        };
+
+        Ok(migrations_to_run
+            .into_iter()
+            .filter(|m| !migrations.contains(&format!("\"{}\"", m)))
+            .collect())
+    }
+
+    pub fn migration_completed(&self, migration: String) -> Result<(), mongodb::Error> {
+        let filter = doc! {
+            "migrations" => {
+                "$exists" => true
+            }
+        };
+        let update = doc! {
+            "$push" => {
+                "migrations" => migration
+            }
+        };
+        self.meta.update_one(
+            filter,
+            update,
+            Some(UpdateOptions {
+                upsert: Some(true),
+                ..UpdateOptions::default()
+            }),
+        )?;
+        Ok(())
     }
 
     pub fn fill_lsh_index(&self) -> Result<Cursor, mongodb::Error> {
