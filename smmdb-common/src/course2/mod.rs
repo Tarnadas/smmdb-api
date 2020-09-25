@@ -7,6 +7,7 @@ use crate::{Difficulty, MinHash, PermGen};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
 use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
+use smmdb_db::Database;
 use smmdb_lib::proto::SMM2Course::SMM2Course;
 use std::{convert::TryFrom, fmt};
 
@@ -19,6 +20,8 @@ pub struct Course2 {
     uploaded: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     difficulty: Option<Difficulty>,
+    #[serde(default)]
+    votes: i32,
     course: SMM2Course,
     hash: MinHash,
 }
@@ -49,6 +52,7 @@ impl Course2 {
             last_modified: uploaded,
             uploaded,
             difficulty,
+            votes: 0,
             course: course.get_course().clone(),
             hash,
         }
@@ -76,6 +80,19 @@ impl Course2 {
 
     pub fn get_uploaded(&self) -> i64 {
         self.uploaded
+    }
+
+    pub fn get_votes(&self) -> i32 {
+        self.votes
+    }
+
+    pub fn get_own_vote(
+        &self,
+        account_id: &ObjectId,
+        course_id: &ObjectId,
+        database: &Database,
+    ) -> Option<i32> {
+        database.get_vote_for_account(account_id, course_id).ok()
     }
 
     pub fn get_course(&self) -> &SMM2Course {

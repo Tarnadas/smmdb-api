@@ -133,7 +133,7 @@ impl Data {
                     .iter()
                     .find(|account| account.get_id().to_string() == course.get_owner().to_string())
                     .unwrap();
-                Course2Response::from_course(course, account)
+                Course2Response::from_course(course, account, &*self.database)
             })
             .collect();
 
@@ -317,10 +317,6 @@ impl Data {
                     );
                     let course_meta = serde_json::to_value(&course)?;
 
-                    let mut course_data = smm_course.get_course_data().clone();
-                    smmdb_lib::Course2::encrypt(&mut course_data);
-                    let data = Bson::Binary(BinarySubtype::Generic, course_data);
-
                     let course_thumb = smm_course
                         .get_course_thumb_mut()
                         .ok_or(courses2::PutCourses2Error::ThumbnailMissing)?;
@@ -360,12 +356,15 @@ impl Data {
                             }
                         }
 
-                        let inserted_id =
-                            self.database
-                                .put_course2(doc_meta, data, thumb, thumb_encrypted)?;
+                        let inserted_id = self.database.put_course2(
+                            doc_meta,
+                            smm_course,
+                            thumb,
+                            thumb_encrypted,
+                        )?;
                         course.set_id(inserted_id);
                         lsh_index.insert(course.get_id().to_hex(), course.get_hash());
-                        let course = Course2Response::from_course(course, account);
+                        let course = Course2Response::from_course(course, account, &*self.database);
                         Ok(course)
                     } else {
                         Err(io::Error::new(io::ErrorKind::Other, "".to_string()).into())

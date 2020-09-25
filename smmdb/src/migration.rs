@@ -1,7 +1,8 @@
 use super::Database;
 
-use bson::{ordered::OrderedDocument, spec::BinarySubtype, Bson};
+use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use flate2::read::GzDecoder;
+use mongodb::coll::options::FindOptions;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
 use smmdb_common::Course2;
@@ -30,6 +31,10 @@ impl Migration {
             Migration {
                 name: "course2_data".to_string(),
                 run: Migration::migrate_course2_data,
+            },
+            Migration {
+                name: "add_smmdb_id".to_string(),
+                run: Migration::add_smmdb_id,
             },
         ];
 
@@ -200,6 +205,73 @@ impl Migration {
             }
         }
         Ok(true)
+    }
+
+    fn add_smmdb_id(database: &Database) {
+        println!("Adding SMMDB ID to course data...");
+        let fixed_count = Arc::new(Mutex::new(0u32));
+        let projection = doc! {
+            "_id" => 1,
+            "data_encrypted" => 1
+        };
+        let courses: Vec<_> = database
+            .course2_data
+            .find(
+                None,
+                Some(FindOptions {
+                    projection: Some(projection),
+                    ..Default::default()
+                }),
+            )
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter_map(|doc| {
+                if let (Bson::Binary(_, data), Bson::ObjectId(course_id)) = (
+                    doc.get("data_encrypted").unwrap().clone(),
+                    doc.get("_id").unwrap().clone(),
+                ) {
+                    Some((course_id.to_string(), data))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        courses.into_par_iter().for_each(|(course_id, data)| {
+            if Migration::add_smmdb_id_to_course(database, course_id, data).is_ok() {
+                let count = *fixed_count.lock().unwrap() + 1;
+                *fixed_count.lock().unwrap() = count;
+            }
+        });
+        println!(
+            "Added {} SMMDB IDs to course data",
+            fixed_count.lock().unwrap()
+        );
+    }
+
+    fn add_smmdb_id_to_course(
+        database: &Database,
+        course_id: String,
+        data: Vec<u8>,
+    ) -> Result<(), mongodb::Error> {
+        let mut course = smmdb_lib::Course2::from_switch_files(data, None, true).unwrap();
+        course.set_smmdb_id(course_id.clone()).unwrap();
+        let mut course_data = course.get_course_data().clone();
+        smmdb_lib::Course2::encrypt(&mut course_data);
+
+        let filter = doc! {
+            "_id" => ObjectId::with_string(&course_id)?,
+        };
+        let update = doc! {
+            "$set" => {
+                "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data),
+            }
+        };
+        database
+            .course2_data
+            .update_one(filter, update, None)
+            .unwrap();
+        Ok(())
     }
 
     fn get_courses2_result(

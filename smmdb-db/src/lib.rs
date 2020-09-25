@@ -206,7 +206,7 @@ impl Database {
     pub fn put_course2(
         &self,
         doc_meta: OrderedDocument,
-        data: Bson,
+        course: &mut smmdb_lib::Course2,
         thumb: Bson,
         thumb_encrypted: Bson,
     ) -> Result<ObjectId, mongodb::Error> {
@@ -214,9 +214,12 @@ impl Database {
         let inserted_id = insert_res
             .inserted_id
             .ok_or_else(|| mongodb::Error::ResponseError("inserted_id not given".to_string()))?;
+        course.set_smmdb_id(inserted_id.to_string()).unwrap();
+        let mut course_data = course.get_course_data().clone();
+        smmdb_lib::Course2::encrypt(&mut course_data);
         let doc = doc! {
             "_id" => inserted_id.clone(),
-            "data_encrypted" => data,
+            "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data),
             "thumb" => thumb,
             "thumb_encrypted" => thumb_encrypted,
         };
@@ -313,6 +316,32 @@ impl Database {
                 ..FindOptions::default()
             }),
         )
+    }
+
+    pub fn get_vote_for_account(
+        &self,
+        account_id: &ObjectId,
+        course_id: &ObjectId,
+    ) -> Result<i32, mongodb::Error> {
+        let filter = doc! {
+            "account_id" => account_id,
+            "course_id" => course_id
+        };
+        let projection = doc! {
+            "value" => true
+        };
+        let res = self
+            .votes
+            .find_one(
+                Some(filter),
+                Some(FindOptions {
+                    projection: Some(projection),
+                    ..FindOptions::default()
+                }),
+            )?
+            .map(|doc| doc.get_i32("value").unwrap_or_default())
+            .unwrap_or_default();
+        Ok(res)
     }
 
     pub fn find_courses2(&self, doc: OrderedDocument) -> Result<Cursor, mongodb::Error> {

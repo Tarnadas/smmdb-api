@@ -95,7 +95,7 @@ dependencies = [
  "serde_urlencoded",
  "sha-1 0.9.1",
  "slab",
- "time 0.2.20",
+ "time 0.2.21",
 ]
 
 [[package]]
@@ -110,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "actix-router"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d7a10ca4d94e8c8e7a87c5173aba1b97ba9a6563ca02b0e1cd23531093d3ec8"
+checksum = "bbd1f7dbda1645bf7da33554db60891755f6c01c1b2169e2f4c492098d30c235"
 dependencies = [
  "bytestring",
  "http",
@@ -179,7 +179,7 @@ dependencies = [
  "futures-util",
  "serde",
  "serde_json",
- "time 0.2.20",
+ "time 0.2.21",
 ]
 
 [[package]]
@@ -281,7 +281,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "socket2",
- "time 0.2.20",
+ "time 0.2.21",
  "tinyvec",
  "url",
 ]
@@ -602,7 +602,7 @@ checksum = "3c177ed0122f24ce5e0f05bf9b29e79f3ac1a359bc504e0e14c3b34896c71c00"
 dependencies = [
  "byteorder",
  "chrono",
- "hex",
+ "hex 0.3.2",
  "libc",
  "linked-hash-map",
  "md5",
@@ -768,7 +768,7 @@ dependencies = [
  "percent-encoding",
  "rand 0.7.3",
  "sha2 0.9.1",
- "time 0.2.20",
+ "time 0.2.21",
  "version_check",
 ]
 
@@ -1299,9 +1299,9 @@ dependencies = [
 
 [[package]]
 name = "hermit-abi"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3deed196b6e7f9e44a2ae8d94225d80302d81208b1bb673fd21fe634645c85a9"
+checksum = "4c30f6d0bc6b00693347368a67d41b58f2fb851215ff1da49e90fe2c5c667151"
 dependencies = [
  "libc",
 ]
@@ -1311,6 +1311,12 @@ name = "hex"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
+
+[[package]]
+name = "hex"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
 name = "hkdf"
@@ -1426,9 +1432,12 @@ checksum = "64e9829a50b42bb782c1df523f78d332fe371b10c661e78b7a3c34b0198e9fac"
 
 [[package]]
 name = "instant"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b141fdc7836c525d4d594027d318c84161ca17aaf8113ab1f81ab93ae897485"
+checksum = "63312a18f7ea8760cdd0a7c5aac1a619752a246b833545e3e36d1f81f7cd9e66"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "iovec"
@@ -1604,9 +1613,9 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "memoffset"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c198b026e1bbf08a937e94c6c60f9ec4a2267f5b0d2eec9c1b21b061ce2be55f"
+checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg 1.0.1",
 ]
@@ -1690,7 +1699,7 @@ dependencies = [
  "byteorder",
  "chrono",
  "data-encoding",
- "hex",
+ "hex 0.3.2",
  "hmac 0.6.3",
  "md-5",
  "pbkdf2",
@@ -2599,7 +2608,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "smmdb 1.2.0",
+ "smmdb 1.3.0",
  "smmdb-auth",
  "smmdb-common",
  "smmdb-db",
@@ -2608,9 +2617,9 @@ dependencies = [
 
 [[package]]
 name = "smmdb"
-version = "1.2.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f393c0396eb266dbb6c6e7e806fbcfcea3d8cc130a95f221b7fb7a37dcd9d1f6"
+checksum = "fe7a36324d5455518a192e1857d6a85760bf91e97aaaba95dd2dcc49ef5cbbe4"
 dependencies = [
  "aes-soft 0.5.0",
  "arrayref",
@@ -2623,6 +2632,7 @@ dependencies = [
  "cmac",
  "console_error_panic_hook",
  "crc",
+ "hex 0.4.2",
  "image",
  "infer",
  "itertools",
@@ -2663,8 +2673,9 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "smmdb 1.2.0",
+ "smmdb 1.3.0",
  "smmdb-auth",
+ "smmdb-db",
  "twox-hash",
 ]
 
@@ -2676,7 +2687,7 @@ dependencies = [
  "bson",
  "mongodb_cwal",
  "serde_json",
- "smmdb 1.2.0",
+ "smmdb 1.3.0",
 ]
 
 [[package]]
@@ -2901,9 +2912,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.2.20"
+version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d4953c513c9bf1b97e9cdd83f11d60c4b0a83462880a360d80d96953a953fee"
+checksum = "2c2e31fb28e2a9f01f5ed6901b066c1ba2333c04b64dc61254142bafcb3feb2c"
 dependencies = [
  "const_fn",
  "libc",

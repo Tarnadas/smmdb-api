@@ -2,6 +2,7 @@ use crate::{Course2, Difficulty};
 
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;
+use smmdb_db::Database;
 use smmdb_lib::proto::SMM2Course::SMM2Course;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -14,11 +15,13 @@ pub struct Course2Response {
     difficulty: Option<Difficulty>,
     last_modified: i64,
     uploaded: i64,
+    votes: i32,
+    own_vote: Option<i32>,
     course: SMM2Course,
 }
 
 impl Course2Response {
-    pub fn from_course(course: Course2, account: &Account) -> Course2Response {
+    pub fn from_course(course: Course2, account: &Account, database: &Database) -> Course2Response {
         Course2Response {
             id: course.get_id().to_hex(),
             owner: course.owner.to_hex(),
@@ -26,6 +29,8 @@ impl Course2Response {
             difficulty: course.get_difficulty().clone(),
             last_modified: course.get_last_modified(),
             uploaded: course.get_uploaded(),
+            votes: course.get_votes(),
+            own_vote: course.get_own_vote(account.get_id(), course.get_id(), database),
             course: course.course,
         }
     }
