@@ -62,10 +62,12 @@ impl Database {
         let votes = client.db("admin").collection(Collections::Votes.as_str());
         let migrations = client.db("admin").collection(Collections::Meta.as_str());
 
+        if let Err(err) = Database::generate_accounts_indexes(&accounts) {
+            println!("{}", err);
+        }
         if let Err(err) = Database::generate_course2_indexes(&courses2) {
             println!("{}", err);
         }
-
         if let Err(err) = Database::generate_votes_indexes(&votes) {
             println!("{}", err);
         }
@@ -79,6 +81,23 @@ impl Database {
             votes,
             meta: migrations,
         }
+    }
+
+    fn generate_accounts_indexes(accounts: &Collection) -> Result<(), mongodb::Error> {
+        let indexes = vec![doc! {
+            "apikey": 1,
+        }];
+        let listed_indexes: Vec<OrderedDocument> = accounts
+            .list_indexes()?
+            .map(|item| -> Result<OrderedDocument, mongodb::Error> { Ok(item?) })
+            .filter_map(Result::ok)
+            .collect();
+        for index in indexes {
+            if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
+                accounts.create_index(index, None)?;
+            }
+        }
+        Ok(())
     }
 
     fn generate_course2_indexes(courses2: &Collection) -> Result<(), mongodb::Error> {

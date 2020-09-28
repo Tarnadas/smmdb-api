@@ -84,7 +84,7 @@ where
 
 #[derive(Debug)]
 pub struct AuthReq {
-    account_id: ObjectId,
+    account_id: Option<ObjectId>,
     apikey: Option<String>,
     session: Option<AuthSession>,
 }
@@ -100,7 +100,7 @@ impl TryFrom<Session> for AuthReq {
         ) {
             if let Ok(account_id) = ObjectId::with_string(&account_id) {
                 return Ok(AuthReq {
-                    account_id,
+                    account_id: Some(account_id),
                     apikey: None,
                     session: Some(AuthSession::new(id_token, expires_at)),
                 });
@@ -117,16 +117,12 @@ impl TryFrom<&RequestHead> for AuthReq {
         if let Some(authorization) = header.headers().get(header::AUTHORIZATION) {
             if let Ok(authorization) = authorization.to_str() {
                 let s: Vec<&str> = authorization.split(' ').collect();
-                if let (Some("APIKEY"), Some(account_id), Some(apikey)) =
-                    (s.get(0).copied(), s.get(1), s.get(2))
-                {
-                    if let Ok(account_id) = ObjectId::with_string(&account_id) {
-                        return Ok(AuthReq {
-                            account_id,
-                            apikey: Some((*apikey).to_string()),
-                            session: None,
-                        });
-                    }
+                if let (Some("APIKEY"), Some(apikey)) = (s.get(0).copied(), s.get(1)) {
+                    return Ok(AuthReq {
+                        account_id: None,
+                        apikey: Some((*apikey).to_string()),
+                        session: None,
+                    });
                 }
             }
         }
@@ -136,9 +132,10 @@ impl TryFrom<&RequestHead> for AuthReq {
 
 impl Into<OrderedDocument> for AuthReq {
     fn into(self) -> OrderedDocument {
-        let mut doc = doc! {
-            "_id" => self.account_id,
-        };
+        let mut doc = doc! {};
+        if let Some(account_id) = self.account_id {
+            doc.insert("_id", account_id);
+        }
         if let Some(session) = self.session {
             let session: OrderedDocument = session.into();
             doc.insert("session", session);
