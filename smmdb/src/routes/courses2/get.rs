@@ -267,6 +267,8 @@ enum SortValue {
     Uploaded,
     #[serde(rename = "course.header.title")]
     CourseHeaderTitle,
+    #[serde(rename = "votes")]
+    Votes,
 }
 
 impl TryFrom<SortValue> for String {

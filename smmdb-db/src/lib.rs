@@ -118,6 +118,24 @@ impl Database {
                 "last_modified": 1,
                 "course.header.title": 1
             },
+            doc! {
+                "votes": 1,
+                "course.header.title": -1
+            },
+            doc! {
+                "votes": -1,
+                "course.header.title": -1
+            },
+            doc! {
+                "votes": 1,
+                "last_modified": -1,
+                "course.header.title": -1
+            },
+            doc! {
+                "votes": -1,
+                "last_modified": -1,
+                "course.header.title": -1
+            },
         ];
         let listed_indexes: Vec<OrderedDocument> = courses2
             .list_indexes()?
