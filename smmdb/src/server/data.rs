@@ -112,6 +112,7 @@ impl Data {
     pub fn get_courses2(
         &self,
         query: courses2::GetCourses2,
+        own_account: Option<Account>,
     ) -> Result<String, courses2::GetCourses2Error> {
         let query = query.into_ordered_document(&self.database)?;
         let cursor = self.database.get_courses2(query)?;
@@ -133,7 +134,7 @@ impl Data {
                     .iter()
                     .find(|account| account.get_id().to_string() == course.get_owner().to_string())
                     .unwrap();
-                Course2Response::from_course(course, account, &*self.database)
+                Course2Response::from_course(course, account, own_account.as_ref(), &*self.database)
             })
             .collect();
 
@@ -364,7 +365,8 @@ impl Data {
                         )?;
                         course.set_id(inserted_id);
                         lsh_index.insert(course.get_id().to_hex(), course.get_hash());
-                        let course = Course2Response::from_course(course, account, &*self.database);
+                        let course =
+                            Course2Response::from_course(course, account, None, &*self.database);
                         Ok(course)
                     } else {
                         Err(io::Error::new(io::ErrorKind::Other, "".to_string()).into())

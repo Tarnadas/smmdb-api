@@ -9,6 +9,7 @@ use actix_web::{
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_qs::actix::QsQuery;
+use smmdb_auth::Identity;
 use smmdb_common::Difficulty;
 use std::{
     convert::{TryFrom, TryInto},
@@ -19,9 +20,13 @@ use std::{
 pub async fn get_courses(
     data: web::Data<ServerData>,
     query: QsQuery<GetCourses2>,
+    identity: Option<Identity>,
     _req: HttpRequest,
 ) -> Result<String, GetCourses2Error> {
-    data.get_courses2(query.into_inner())
+    data.get_courses2(
+        query.into_inner(),
+        identity.map(|identity| identity.get_account()),
+    )
 }
 
 fn is_true() -> bool {
