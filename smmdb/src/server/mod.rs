@@ -45,7 +45,7 @@ impl Server {
                         .secure(false),
                 )
                 .wrap(
-                    Cors::new()
+                    Cors::default()
                         .allowed_methods(vec!["GET", "POST", "PUT", "OPTIONS", "DELETE"])
                         .allowed_headers(vec![
                             header::AUTHORIZATION,
@@ -53,8 +53,7 @@ impl Server {
                             header::CONTENT_TYPE,
                         ])
                         .supports_credentials()
-                        .max_age(3600)
-                        .finish(),
+                        .max_age(3600),
                 )
                 .wrap(Compress::default())
                 .wrap(Logger::default())

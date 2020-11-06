@@ -5,7 +5,7 @@ authors = ["Mario Reder <mreder1289@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix-cors = "0.3"
+actix-cors = "0.5"
 actix-http = { version = "2", features = [ "rustls" ] }
 actix-service = "1"
 actix-session = "0.4"
@@ -14,7 +14,7 @@ actix-rt = "1"
 awc = "2"
 brotli2 = "0.3"
 bson = "0.14"
-env_logger = "0.7"
+env_logger = "0.8"
 failure = "0.1"
 flate2 = "1"
 futures = "0.3"
