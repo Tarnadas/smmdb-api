@@ -52,7 +52,7 @@ impl Server {
                             header::ACCEPT,
                             header::CONTENT_TYPE,
                         ])
-                        .allowed_origin("http://localhost:3000")
+                        .allowed_origin("*")
                         .supports_credentials()
                         .max_age(3600),
                 )
