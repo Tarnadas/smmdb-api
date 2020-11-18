@@ -52,7 +52,7 @@ impl Server {
                             header::ACCEPT,
                             header::CONTENT_TYPE,
                         ])
-                        .allowed_origin("*")
+                        .allow_any_origin()
                         .supports_credentials()
                         .max_age(3600),
                 )
