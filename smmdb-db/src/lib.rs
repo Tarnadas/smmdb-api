@@ -251,6 +251,9 @@ impl Database {
         let inserted_id = insert_res
             .inserted_id
             .ok_or_else(|| mongodb::Error::ResponseError("inserted_id not given".to_string()))?;
+        let inserted_id = inserted_id.as_object_id().ok_or_else(|| {
+            mongodb::Error::ResponseError("inserted_id is not an ObjectId".to_string())
+        })?;
         course.set_smmdb_id(inserted_id.to_string()).unwrap();
         let mut course_data = course.get_course_data().clone();
         smmdb_lib::Course2::encrypt(&mut course_data);
@@ -261,7 +264,7 @@ impl Database {
             "thumb_encrypted" => thumb_encrypted,
         };
         self.course2_data.insert_one(doc, None)?;
-        Ok(inserted_id.as_object_id().unwrap().clone())
+        Ok(inserted_id.clone())
     }
 
     pub fn get_course2(
