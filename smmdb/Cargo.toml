@@ -21,6 +21,7 @@ futures = "0.3"
 image = "0.23"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
 num_cpus = "1"
+parking_lot = "0.11"
 protobuf = "2"
 rand = "0.7"
 rayon = "1"
@@ -33,3 +34,4 @@ smmdb-common = { path = "../smmdb-common" }
 smmdb-db = { path = "../smmdb-db" }
 smmdb-lib = { version = "1", package = "smmdb" }
 tar = "0.4"
+zstd = "0.5"

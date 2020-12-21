@@ -3,14 +3,13 @@ use super::Database;
 use bson::{oid::ObjectId, ordered::OrderedDocument, spec::BinarySubtype, Bson};
 use flate2::read::GzDecoder;
 use mongodb::coll::options::FindOptions;
+use parking_lot::Mutex;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
 use smmdb_common::Course2;
 use smmdb_db::DatabaseError;
-use std::{
-    convert::TryInto,
-    sync::{Arc, Mutex},
-};
+use std::{convert::TryInto, sync::Arc};
+use zstd::dict;
 
 pub struct Migration {
     name: String,
@@ -36,6 +35,11 @@ impl Migration {
                 name: "add_smmdb_id".to_string(),
                 run: Migration::add_smmdb_id,
             },
+            // TODO fix out of memory
+            // Migration {
+            //     name: "zstd_dictionary".to_string(),
+            //     run: Migration::zstd_dictionary,
+            // },
         ];
 
         let migrations_to_run = database
@@ -98,10 +102,10 @@ impl Migration {
             })
             .for_each(|(doc, _err)| {
                 Migration::fix_course2(database, doc.get("_id").unwrap()).unwrap();
-                let count = *fixed_count.lock().unwrap() + 1;
-                *fixed_count.lock().unwrap() = count;
+                let count = *fixed_count.lock() + 1;
+                *fixed_count.lock() = count;
             });
-        println!("Fixed {} SMM2 courses", fixed_count.lock().unwrap());
+        println!("Fixed {} SMM2 courses", fixed_count.lock());
     }
 
     fn fix_course2(database: &Database, course_id: &Bson) -> Result<(), mongodb::Error> {
@@ -148,11 +152,11 @@ impl Migration {
             .filter_map(Result::ok)
             .for_each(|course| {
                 if Migration::fix_course2_data(database, course).unwrap() {
-                    let count = *fixed_count.lock().unwrap() + 1;
-                    *fixed_count.lock().unwrap() = count;
+                    let count = *fixed_count.lock() + 1;
+                    *fixed_count.lock() = count;
                 }
             });
-        println!("Converted {} SMM2 course data", fixed_count.lock().unwrap());
+        println!("Converted {} SMM2 course data", fixed_count.lock());
     }
 
     fn fix_course2_data(database: &Database, course: Course2) -> Result<bool, mongodb::Error> {
@@ -239,14 +243,11 @@ impl Migration {
 
         courses.into_par_iter().for_each(|(course_id, data)| {
             if Migration::add_smmdb_id_to_course(database, course_id, data).is_ok() {
-                let count = *fixed_count.lock().unwrap() + 1;
-                *fixed_count.lock().unwrap() = count;
+                let count = *fixed_count.lock() + 1;
+                *fixed_count.lock() = count;
             }
         });
-        println!(
-            "Added {} SMMDB IDs to course data",
-            fixed_count.lock().unwrap()
-        );
+        println!("Added {} SMMDB IDs to course data", fixed_count.lock());
     }
 
     fn add_smmdb_id_to_course(
@@ -292,5 +293,49 @@ impl Migration {
             .collect();
 
         Ok(courses)
+    }
+
+    #[allow(unused)]
+    fn zstd_dictionary(database: &Database) {
+        let options = FindOptions {
+            projection: Some(doc! {
+                "data_encrypted" => 1,
+            }),
+            ..FindOptions::default()
+        };
+        let cursor = database.course2_data.find(None, Some(options)).unwrap();
+
+        let sample_sizes = Arc::new(Mutex::new(vec![]));
+        let courses = Arc::new(Mutex::new(Vec::new()));
+        // courses
+        //     .lock()
+        //     .try_reserve(376_832 * cursor.size_hint().0)
+        //     .unwrap();
+        // courses.append(
+
+        // );
+        cursor.into_iter().par_bridge().for_each(|course| {
+            let mut course = course.unwrap();
+            let course = course.get_binary_generic_mut(&"data_encrypted").unwrap();
+            smmdb_lib::Course2::decrypt(course);
+
+            if course.len() != 376_832 {
+                panic!("sample size must not change");
+            }
+            // if let Ok(course) = courses.lock().try_reserve(376_832) {}
+            // sample_sizes.lock().push(*sample_size.read());
+            // // dbg!(course.len());
+            // courses.lock().extend(&course[..])
+        });
+
+        let dict = dict::from_continuous(
+            // &courses[..],
+            &Arc::try_unwrap(courses).unwrap().into_inner()[..],
+            &Arc::try_unwrap(sample_sizes).unwrap().into_inner()[..],
+            376_832,
+        )
+        .unwrap();
+
+        todo!();
     }
 }
