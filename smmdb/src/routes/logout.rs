@@ -4,15 +4,16 @@ use actix_web::{
     dev::{self, HttpResponseBuilder},
     error::ResponseError,
     http::StatusCode,
-    post, web, HttpRequest, HttpResponse,
+    HttpRequest, HttpResponse,
 };
+use paperclip::actix::{api_v2_operation, web, Mountable};
 use smmdb_auth::Identity;
 
-pub fn service() -> impl dev::HttpServiceFactory {
-    web::scope("/logout").service(logout)
+pub fn service() -> impl dev::HttpServiceFactory + Mountable {
+    web::resource("/logout").route(web::post().to(logout))
 }
 
-#[post("")]
+#[api_v2_operation(tags(Auth))]
 async fn logout(
     data: web::Data<ServerData>,
     _req: HttpRequest,

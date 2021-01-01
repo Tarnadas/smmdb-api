@@ -3,10 +3,9 @@ use crate::{
     Database,
 };
 
-use actix_web::{
-    error::ResponseError, get, http::StatusCode, web, Error, HttpRequest, HttpResponse,
-};
+use actix_web::{error::ResponseError, http::StatusCode, Error, HttpResponse};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_qs::actix::QsQuery;
 use smmdb_auth::Identity;
@@ -16,24 +15,24 @@ use std::{
     io,
 };
 
-#[get("")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn get_courses(
     data: web::Data<ServerData>,
     query: QsQuery<GetCourses2>,
     identity: Option<Identity>,
-    _req: HttpRequest,
 ) -> Result<String, GetCourses2Error> {
-    data.get_courses2(
+    let res = serde_json::to_string(&data.get_courses2(
         query.into_inner(),
         identity.map(|identity| identity.get_account()),
-    )
+    )?)?;
+    Ok(res)
 }
 
 fn is_true() -> bool {
     true
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Apiv2Schema, Deserialize, Debug)]
 pub struct GetCourses2 {
     #[serde(default)]
     limit: Limit,
@@ -219,7 +218,7 @@ impl GetCourses2 {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Apiv2Schema, Debug, Deserialize)]
 struct Limit(#[serde(deserialize_with = "deserialize_limit")] u32);
 
 impl Default for Limit {
@@ -308,7 +307,13 @@ where
     }
 }
 
-#[derive(Fail, Debug)]
+#[api_v2_errors(
+    code = 400,
+    description = "Deserialization failed or bad JSON",
+    code = 404,
+    code = 500
+)]
+#[derive(Debug, Fail)]
 pub enum GetCourses2Error {
     #[fail(display = "could not deserialize {} from hex string", _0)]
     DeserializeError(String),

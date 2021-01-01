@@ -5,16 +5,14 @@ use smmdb_lib::{course2::Course2, proto::SMM2Course::SMM2Course};
 use actix_web::{
     error::{PayloadError, ResponseError},
     http::StatusCode,
-    post,
-    web::{self},
-    HttpRequest, HttpResponse,
+    HttpResponse,
 };
 use futures::{self, StreamExt};
+use paperclip::actix::{api_v2_operation, web};
 
-#[post("analyze")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn post_analyze_courses(
     _data: web::Data<ServerData>,
-    _req: HttpRequest,
     mut payload: web::Payload,
 ) -> Result<HttpResponse, PostCourses2Error> {
     let mut bytes = web::BytesMut::new();

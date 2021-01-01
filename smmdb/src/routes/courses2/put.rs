@@ -4,23 +4,23 @@ use actix_http::body::Body;
 use actix_web::{
     error::{PayloadError, ResponseError},
     http::StatusCode,
-    put,
     web::{self},
     HttpRequest, HttpResponse,
 };
 use futures::{self, StreamExt};
+use paperclip::actix::{api_v2_operation, Apiv2Schema};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
 use smmdb_auth::Identity;
 use smmdb_common::{Course2Response, Course2SimilarityError, Difficulty};
 use std::io;
 
-#[derive(Debug, Deserialize)]
+#[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct PutCourses2 {
     difficulty: Option<Difficulty>,
 }
 
-#[put("")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn put_courses(
     data: web::Data<ServerData>,
     _req: HttpRequest,
