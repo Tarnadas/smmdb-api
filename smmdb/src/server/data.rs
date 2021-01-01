@@ -113,7 +113,7 @@ impl Data {
         &self,
         query: courses2::GetCourses2,
         own_account: Option<Account>,
-    ) -> Result<String, courses2::GetCourses2Error> {
+    ) -> Result<Vec<Course2Response>, courses2::GetCourses2Error> {
         let query = query.into_ordered_document(&self.database)?;
         let cursor = self.database.get_courses2(query)?;
 
@@ -138,7 +138,7 @@ impl Data {
             })
             .collect();
 
-        Ok(serde_json::to_string(&courses)?)
+        Ok(courses)
     }
 
     pub fn get_course2(

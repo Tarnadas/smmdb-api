@@ -1,14 +1,15 @@
 use crate::server::ServerData;
 
 use actix_http::http::header;
-use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpResponse};
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::{oid::ObjectId, ValueAccessError};
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
 use std::{io, time::SystemTime};
 use tar::{Builder, Header};
 
-#[get("download/{course_id}")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn download_course(
     data: web::Data<ServerData>,
     path: web::Path<String>,
@@ -64,7 +65,7 @@ pub async fn download_course(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct DownloadCourse2 {
     #[serde(default)]
     pub file_format: FileFormat,
@@ -74,7 +75,7 @@ pub struct DownloadCourse2 {
     pub thumb_format: ThumbFormat,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Apiv2Schema, Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum FileFormat {
     Tar,
@@ -86,7 +87,7 @@ impl Default for FileFormat {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Apiv2Schema, Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum CourseFormat {
     Encrypted,
@@ -100,7 +101,7 @@ impl Default for CourseFormat {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Apiv2Schema, Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ThumbFormat {
     Encrypted,

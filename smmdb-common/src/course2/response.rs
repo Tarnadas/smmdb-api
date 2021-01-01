@@ -45,3 +45,8 @@ impl Course2Response {
         }
     }
 }
+
+// TODO OpenAPI gen
+// #[derive(Apiv2Schema, Debug, Deserialize, Serialize)]
+
+// pub struct SMM2CourseReponse(SMM2Course);

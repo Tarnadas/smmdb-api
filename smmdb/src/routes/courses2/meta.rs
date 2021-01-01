@@ -1,18 +1,19 @@
 use crate::server::ServerData;
 
 use actix_http::body::Body;
-use actix_web::{error::ResponseError, http::StatusCode, post, web, HttpRequest, HttpResponse};
+use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use smmdb_auth::Identity;
 use smmdb_common::Difficulty;
 
-#[derive(Debug, Deserialize)]
+#[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct PostCourse2Meta {
     difficulty: Option<Difficulty>,
 }
 
-#[post("meta/{course_id}")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn post_meta(
     data: web::Data<ServerData>,
     path: web::Path<String>,

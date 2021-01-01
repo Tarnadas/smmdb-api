@@ -1,11 +1,12 @@
 use crate::server::ServerData;
 
-use actix_web::{error::ResponseError, get, http::StatusCode, web, HttpRequest, HttpResponse};
+use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
 
-#[get("thumbnail/{course_id}")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn get_thumbnail(
     data: web::Data<ServerData>,
     path: web::Path<String>,
@@ -18,13 +19,13 @@ pub async fn get_thumbnail(
     Ok(HttpResponse::Ok().content_type("image/jpeg").body(thumb))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct GetThumbnail2 {
     #[serde(default)]
     pub size: Size2,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Apiv2Schema, Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Size2 {
     S,

@@ -6,9 +6,10 @@ use actix_web::{
     dev::{self, HttpResponseBuilder},
     error::ResponseError,
     http::StatusCode,
-    post, web, HttpRequest, HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use awc::{error::JsonPayloadError, SendClientRequest};
+use paperclip::actix::{api_v2_operation, web, Mountable};
 use serde::Deserialize;
 use smmdb_auth::{AccountConvertError, AccountReq, AccountRes, AuthSession, IdInfo, Identity};
 use std::convert::TryInto;
@@ -25,20 +26,20 @@ struct TokenObj {
     expires_at: i64,
 }
 
-pub fn service() -> impl dev::HttpServiceFactory {
+pub fn service() -> impl dev::HttpServiceFactory + Mountable {
     web::scope("/login")
-        .service(login)
-        .service(login_with_google)
+        .service(web::resource("").route(web::post().to(login)))
+        .service(web::resource("/google").route(web::post().to(login_with_google)))
 }
 
-#[post("")]
+#[api_v2_operation(tags(Auth))]
 fn login(_data: web::Data<ServerData>, _req: HttpRequest, identity: Identity) -> HttpResponse {
     let account = identity.get_account();
     let account = AccountRes::new(&account);
     HttpResponseBuilder::new(StatusCode::OK).json(account)
 }
 
-#[post("/google")]
+#[api_v2_operation(tags(Auth))]
 async fn login_with_google(
     data: web::Data<ServerData>,
     _req: HttpRequest,

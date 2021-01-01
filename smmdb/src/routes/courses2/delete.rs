@@ -1,14 +1,14 @@
 use crate::server::ServerData;
 
-use actix_web::{delete, error::ResponseError, http::StatusCode, web, HttpRequest, HttpResponse};
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::oid::ObjectId;
+use paperclip::actix::{api_v2_operation, web};
 use smmdb_auth::Identity;
 
-#[delete("{course_id}")]
+#[api_v2_operation(tags(SMM2))]
 pub async fn delete_course(
     data: web::Data<ServerData>,
     path: web::Path<String>,
-    _req: HttpRequest,
     identity: Identity,
 ) -> Result<HttpResponse, DeleteCourse2Error> {
     let course_id = path.into_inner();

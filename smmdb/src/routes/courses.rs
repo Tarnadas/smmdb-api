@@ -3,8 +3,9 @@ use crate::{
     Database,
 };
 
-use actix_web::{dev, error::ResponseError, get, http::StatusCode, web, HttpRequest, HttpResponse};
+use actix_web::{dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema, Mountable};
 use protobuf::ProtobufEnum;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
@@ -12,11 +13,11 @@ use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
 
-pub fn service() -> impl dev::HttpServiceFactory {
-    web::scope("/courses").service(get_courses)
+pub fn service() -> impl dev::HttpServiceFactory + Mountable {
+    web::resource("/courses").route(web::get().to(get_courses))
 }
 
-#[get("")]
+#[api_v2_operation(tags(SMM1))]
 async fn get_courses(
     data: web::Data<ServerData>,
     query: QsQuery<GetCourses>,
@@ -25,7 +26,7 @@ async fn get_courses(
     data.get_courses(query.into_inner())
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Apiv2Schema, Deserialize, Debug)]
 pub struct GetCourses {
     #[serde(default)]
     limit: Limit,
@@ -267,7 +268,7 @@ impl GetCourses {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Apiv2Schema, Deserialize, Debug)]
 struct Limit(u32);
 
 impl Default for Limit {
@@ -276,7 +277,7 @@ impl Default for Limit {
     }
 }
 
-#[derive(Fail, Debug)]
+#[derive(Apiv2Schema, Debug, Fail)]
 pub enum GetCoursesError {
     #[fail(display = "limit must be at least 1")]
     LimitTooLow,

@@ -21,6 +21,7 @@ futures = "0.3"
 image = "0.23"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
 num_cpus = "1"
+paperclip = { version = "0.5", features = ["actix-nightly", "actix-session", "serde_qs"] }
 parking_lot = "0.11"
 protobuf = "2"
 rand = "0.7"
@@ -28,7 +29,7 @@ rayon = "1"
 regex = "1"
 serde = "1"
 serde_json = "1"
-serde_qs = { version = "0.7", features = ["actix"], git = "https://github.com/Tarnadas/serde_qs.git" }
+serde_qs = { version = "0.8", features = ["actix"] }
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-common = { path = "../smmdb-common" }
 smmdb-db = { path = "../smmdb-db" }

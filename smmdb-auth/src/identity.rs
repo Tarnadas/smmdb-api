@@ -8,9 +8,16 @@ use actix_web::{
     Error, FromRequest,
 };
 use futures::future::{err, ok, Ready};
+use paperclip::actix::Apiv2Security;
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug)]
+#[derive(Apiv2Security, Debug)]
+#[openapi(
+    apiKey,
+    in = "header",
+    name = "Authorization",
+    description = "Use format 'APIKEY TOKEN'"
+)]
 pub struct Identity(Rc<RefCell<Option<Account>>>);
 
 impl Identity {
