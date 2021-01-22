@@ -4,9 +4,7 @@ pub use response::CourseResponse;
 
 use bson::{oid::ObjectId, ordered::OrderedDocument, ValueAccessError};
 use serde::Serialize;
-use smmdb_lib::proto::SMMCourse::{
-    SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
-};
+use smmdb_lib::proto::SMMCourse::smmcourse::{AutoScroll, CourseTheme, GameStyle};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,11 +16,11 @@ pub struct Course {
     owner: ObjectId,
     #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
-    game_style: SMMCourse_GameStyle,
-    course_theme: SMMCourse_CourseTheme,
-    course_theme_sub: SMMCourse_CourseTheme,
-    auto_scroll: SMMCourse_AutoScroll,
-    auto_scroll_sub: SMMCourse_AutoScroll,
+    game_style: GameStyle,
+    course_theme: CourseTheme,
+    course_theme_sub: CourseTheme,
+    auto_scroll: AutoScroll,
+    auto_scroll_sub: AutoScroll,
     width: i32,
     width_sub: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -100,13 +98,13 @@ impl Course {
     fn map_to_auto_scroll(
         document: &OrderedDocument,
         identifier: &str,
-    ) -> Result<SMMCourse_AutoScroll, ValueAccessError> {
+    ) -> Result<AutoScroll, ValueAccessError> {
         match document.get_i32(identifier)? {
-            0 => Ok(SMMCourse_AutoScroll::DISABLED),
-            1 => Ok(SMMCourse_AutoScroll::SLOW),
-            2 => Ok(SMMCourse_AutoScroll::MEDIUM),
-            3 => Ok(SMMCourse_AutoScroll::FAST),
-            4 => Ok(SMMCourse_AutoScroll::LOCK),
+            0 => Ok(AutoScroll::DISABLED),
+            1 => Ok(AutoScroll::SLOW),
+            2 => Ok(AutoScroll::MEDIUM),
+            3 => Ok(AutoScroll::FAST),
+            4 => Ok(AutoScroll::LOCK),
             _ => Err(ValueAccessError::UnexpectedType),
         }
     }
@@ -114,14 +112,14 @@ impl Course {
     fn map_to_course_theme(
         document: &OrderedDocument,
         identifier: &str,
-    ) -> Result<SMMCourse_CourseTheme, ValueAccessError> {
+    ) -> Result<CourseTheme, ValueAccessError> {
         match document.get_i32(identifier)? {
-            0 => Ok(SMMCourse_CourseTheme::GROUND),
-            1 => Ok(SMMCourse_CourseTheme::UNDERGROUND),
-            2 => Ok(SMMCourse_CourseTheme::CASTLE),
-            3 => Ok(SMMCourse_CourseTheme::AIRSHIP),
-            4 => Ok(SMMCourse_CourseTheme::UNDERWATER),
-            5 => Ok(SMMCourse_CourseTheme::GHOUST_HOUSE),
+            0 => Ok(CourseTheme::GROUND),
+            1 => Ok(CourseTheme::UNDERGROUND),
+            2 => Ok(CourseTheme::CASTLE),
+            3 => Ok(CourseTheme::AIRSHIP),
+            4 => Ok(CourseTheme::UNDERWATER),
+            5 => Ok(CourseTheme::GHOUST_HOUSE),
             _ => Err(ValueAccessError::UnexpectedType),
         }
     }
@@ -129,12 +127,12 @@ impl Course {
     fn map_to_game_style(
         document: &OrderedDocument,
         identifier: &str,
-    ) -> Result<SMMCourse_GameStyle, ValueAccessError> {
+    ) -> Result<GameStyle, ValueAccessError> {
         match document.get_i32(identifier)? {
-            0 => Ok(SMMCourse_GameStyle::M1),
-            1 => Ok(SMMCourse_GameStyle::M3),
-            2 => Ok(SMMCourse_GameStyle::MW),
-            3 => Ok(SMMCourse_GameStyle::WU),
+            0 => Ok(GameStyle::M1),
+            1 => Ok(GameStyle::M3),
+            2 => Ok(GameStyle::MW),
+            3 => Ok(GameStyle::WU),
             _ => Err(ValueAccessError::UnexpectedType),
         }
     }

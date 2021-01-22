@@ -9,4 +9,4 @@ brotli2 = "0.3"
 bson = "0.14"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
 serde_json = "1"
-smmdb-lib = { version = "1", package = "smmdb" }
+smmdb-lib = { version = "2", package = "smmdb", path = "../../smmdb-lib", features = ["actix-paperclip"] }

@@ -2,9 +2,7 @@ use crate::Course;
 
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;
-use smmdb_lib::proto::SMMCourse::{
-    SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
-};
+use smmdb_lib::proto::SMMCourse::smmcourse::{AutoScroll, CourseTheme, GameStyle};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,11 +14,11 @@ pub struct CourseResponse {
     uploader: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
-    game_style: SMMCourse_GameStyle,
-    course_theme: SMMCourse_CourseTheme,
-    course_theme_sub: SMMCourse_CourseTheme,
-    auto_scroll: SMMCourse_AutoScroll,
-    auto_scroll_sub: SMMCourse_AutoScroll,
+    game_style: GameStyle,
+    course_theme: CourseTheme,
+    course_theme_sub: CourseTheme,
+    auto_scroll: AutoScroll,
+    auto_scroll_sub: AutoScroll,
     width: i32,
     width_sub: i32,
     #[serde(skip_serializing_if = "Option::is_none")]

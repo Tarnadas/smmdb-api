@@ -33,6 +33,6 @@ serde_qs = { version = "0.8", features = ["actix"] }
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-common = { path = "../smmdb-common" }
 smmdb-db = { path = "../smmdb-db" }
-smmdb-lib = { version = "1", package = "smmdb" }
+smmdb-lib = { version = "2", package = "smmdb", path = "../../smmdb-lib", features = ["actix-paperclip"] }
 tar = "0.4"
 zstd = "0.5"

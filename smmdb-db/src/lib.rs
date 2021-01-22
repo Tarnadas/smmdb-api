@@ -481,10 +481,10 @@ impl Database {
         use std::io::prelude::*;
 
         let bson_course = course.get("data_encrypted").unwrap();
-        if let Bson::Binary(_, course_data) = bson_course.clone() {
+        if let Bson::Binary(_, mut course_data) = bson_course.clone() {
             let course =
-                smmdb_lib::Course2::from_switch_files(course_data.clone(), None, true).unwrap();
-            let course_data = course.into_proto();
+                smmdb_lib::Course2::from_switch_files(&mut course_data, None, true).unwrap();
+            let course_data = course.get_proto();
 
             let mut data_br = vec![];
             let mut params = CompressParams::new();

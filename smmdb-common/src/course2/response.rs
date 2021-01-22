@@ -1,11 +1,15 @@
 use crate::{Course2, Difficulty};
 
+use paperclip::{
+    actix::Apiv2Schema,
+    v2::{models::DataType, schema::TypedData},
+};
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;
 use smmdb_db::Database;
 use smmdb_lib::proto::SMM2Course::SMM2Course;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Apiv2Schema, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Course2Response {
     id: String,

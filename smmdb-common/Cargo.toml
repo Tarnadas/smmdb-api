@@ -12,5 +12,5 @@ serde = "1"
 serde_json = "1"
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-db = { path = "../smmdb-db" }
-smmdb-lib = { version = "1", package = "smmdb" }
+smmdb-lib = { version = "2", package = "smmdb", path = "../../smmdb-lib", features = ["actix-paperclip"] }
 twox-hash = "1"
