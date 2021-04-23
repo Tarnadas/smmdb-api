@@ -37,27 +37,27 @@ RUN cd / && \
 WORKDIR /smmdb
 
 COPY ./Cargo.toml ./Cargo.toml
-COPY ./smmdb/Cargo.toml ./smmdb/Cargo.toml
-COPY ./smmdb-auth/Cargo.toml ./smmdb-auth/Cargo.toml
-COPY ./smmdb-common/Cargo.toml ./smmdb-common/Cargo.toml
-COPY ./smmdb-db/Cargo.toml ./smmdb-db/Cargo.toml
+COPY ./crates/smmdb/Cargo.toml ./crates/smmdb/Cargo.toml
+COPY ./crates/smmdb-auth/Cargo.toml ./crates/smmdb-auth/Cargo.toml
+COPY ./crates/smmdb-common/Cargo.toml ./crates/smmdb-common/Cargo.toml
+COPY ./crates/smmdb-db/Cargo.toml ./crates/smmdb-db/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 RUN rm ./src/main.rs && \
-    mkdir -p ./smmdb/src && \
-    echo "fn main() {}" >> ./smmdb/src/main.rs && \
-    mkdir -p ./smmdb-auth/src && \
-    touch ./smmdb-auth/src/lib.rs && \
-    mkdir -p ./smmdb-common/src && \
-    touch ./smmdb-common/src/lib.rs && \
-    mkdir -p ./smmdb-db/src && \
-    touch ./smmdb-db/src/lib.rs
+    mkdir -p ./crates/smmdb/src && \
+    echo "fn main() {}" >> ./crates/smmdb/src/main.rs && \
+    mkdir -p ./crates/smmdb-auth/src && \
+    touch ./crates/smmdb-auth/src/lib.rs && \
+    mkdir -p ./crates/smmdb-common/src && \
+    touch ./crates/smmdb-common/src/lib.rs && \
+    mkdir -p ./crates/smmdb-db/src && \
+    touch ./crates/smmdb-db/src/lib.rs
 
 RUN cargo fetch
 RUN cargo build --release
-RUN rm ./smmdb/src/*.rs && \
-    rm ./smmdb-auth/src/*.rs && \
-    rm ./smmdb-common/src/*.rs && \
-    rm ./smmdb-db/src/*.rs
+RUN rm ./crates/smmdb/src/*.rs && \
+    rm ./crates/smmdb-auth/src/*.rs && \
+    rm ./crates/smmdb-common/src/*.rs && \
+    rm ./crates/smmdb-db/src/*.rs
 
 COPY . .
 

@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "smmdb",
-    "smmdb-auth",
-    "smmdb-common",
-    "smmdb-db"
+    "crates/smmdb",
+    "crates/smmdb-auth",
+    "crates/smmdb-common",
+    "crates/smmdb-db"
 ]
 
 [profile]
