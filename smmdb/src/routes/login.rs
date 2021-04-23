@@ -2,11 +2,7 @@ use crate::server::ServerData;
 
 use actix_session::Session;
 use actix_web::{
-    client::Client,
-    dev::{self, HttpResponseBuilder},
-    error::ResponseError,
-    http::StatusCode,
-    HttpRequest, HttpResponse,
+    client::Client, dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse,
 };
 use awc::{error::JsonPayloadError, SendClientRequest};
 use paperclip::actix::{api_v2_operation, web, Mountable};
@@ -33,10 +29,13 @@ pub fn service() -> impl dev::HttpServiceFactory + Mountable {
 }
 
 #[api_v2_operation(tags(Auth))]
-fn login(_data: web::Data<ServerData>, _req: HttpRequest, identity: Identity) -> HttpResponse {
+fn login(
+    _data: web::Data<ServerData>,
+    _req: HttpRequest,
+    identity: Identity,
+) -> web::Json<AccountRes> {
     let account = identity.get_account();
-    let account = AccountRes::new(&account);
-    HttpResponseBuilder::new(StatusCode::OK).json(account)
+    web::Json(AccountRes::new(&account))
 }
 
 #[api_v2_operation(tags(Auth))]
@@ -46,7 +45,7 @@ async fn login_with_google(
     json: web::Json<Login>,
     client: web::Data<Client>,
     session: Session,
-) -> Result<HttpResponse, LoginError> {
+) -> Result<web::Json<AccountRes>, LoginError> {
     let id_token = json.token_obj.id_token.clone();
     let request: SendClientRequest = client
         .get(&format!(
@@ -65,7 +64,7 @@ async fn login_with_google(
     };
     let id_info: IdInfo = response.json().await?;
     if data.google_client_id != id_info.aud {
-        Err(LoginError::ClientIdInvalid(id_info.aud).into())
+        Err(LoginError::ClientIdInvalid(id_info.aud))
     } else {
         let account: AccountReq = id_info.try_into()?;
         session.set("id_token", id_token.clone()).unwrap();
@@ -79,7 +78,7 @@ async fn login_with_google(
         // TODO get stars from database
         let account = AccountRes::new(&account);
         session.set("account_id", account.get_id()).unwrap();
-        Ok(HttpResponseBuilder::new(StatusCode::OK).json(account))
+        Ok(web::Json(account))
     }
 }
 

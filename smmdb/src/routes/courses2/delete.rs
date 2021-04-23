@@ -2,7 +2,7 @@ use crate::server::ServerData;
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web};
+use paperclip::actix::{api_v2_operation, web, NoContent};
 use smmdb_auth::Identity;
 
 #[api_v2_operation(tags(SMM2))]
@@ -10,15 +10,15 @@ pub async fn delete_course(
     data: web::Data<ServerData>,
     path: web::Path<String>,
     identity: Identity,
-) -> Result<HttpResponse, DeleteCourse2Error> {
+) -> Result<NoContent, DeleteCourse2Error> {
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
     let account = identity.get_account();
     if !data.does_account_own_course(account.get_id().clone(), course_oid.clone()) {
-        return Err(DeleteCourse2Error::Unauthorized.into());
+        return Err(DeleteCourse2Error::Unauthorized);
     }
     data.delete_course2(course_id, course_oid)?;
-    Ok(HttpResponse::NoContent().into())
+    Ok(NoContent)
 }
 
 #[derive(Debug, Fail)]

@@ -34,6 +34,12 @@ pub struct Database {
     meta: Collection,
 }
 
+impl Default for Database {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Database {
     pub fn new() -> Self {
         let host = match env::var("DOCKER") {
@@ -87,11 +93,8 @@ impl Database {
         let indexes = vec![doc! {
             "apikey": 1,
         }];
-        let listed_indexes: Vec<OrderedDocument> = accounts
-            .list_indexes()?
-            .map(|item| -> Result<OrderedDocument, mongodb::Error> { Ok(item?) })
-            .filter_map(Result::ok)
-            .collect();
+        let listed_indexes: Vec<OrderedDocument> =
+            accounts.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
             if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
                 accounts.create_index(index, None)?;
@@ -137,11 +140,8 @@ impl Database {
                 "course.header.title": -1
             },
         ];
-        let listed_indexes: Vec<OrderedDocument> = courses2
-            .list_indexes()?
-            .map(|item| -> Result<OrderedDocument, mongodb::Error> { Ok(item?) })
-            .filter_map(Result::ok)
-            .collect();
+        let listed_indexes: Vec<OrderedDocument> =
+            courses2.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
             if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
                 courses2.create_index(index, None)?;
@@ -155,11 +155,8 @@ impl Database {
             "account_id": 1,
             "course_id": 1,
         }];
-        let listed_indexes: Vec<OrderedDocument> = votes
-            .list_indexes()?
-            .map(|item| -> Result<OrderedDocument, mongodb::Error> { Ok(item?) })
-            .filter_map(Result::ok)
-            .collect();
+        let listed_indexes: Vec<OrderedDocument> =
+            votes.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
             if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
                 votes.create_index(index, None)?;
@@ -482,8 +479,7 @@ impl Database {
 
         let bson_course = course.get("data_encrypted").unwrap();
         if let Bson::Binary(_, course_data) = bson_course.clone() {
-            let course =
-                smmdb_lib::Course2::from_switch_files(course_data.clone(), None, true).unwrap();
+            let course = smmdb_lib::Course2::from_switch_files(course_data, None, true).unwrap();
             let course_data = course.into_proto();
 
             let mut data_br = vec![];

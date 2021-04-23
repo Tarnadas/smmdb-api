@@ -1,12 +1,7 @@
 use crate::server::ServerData;
 
-use actix_web::{
-    dev::{self, HttpResponseBuilder},
-    error::ResponseError,
-    http::StatusCode,
-    HttpRequest, HttpResponse,
-};
-use paperclip::actix::{api_v2_operation, web, Mountable};
+use actix_web::{dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
+use paperclip::actix::{api_v2_operation, web, Mountable, NoContent};
 use smmdb_auth::Identity;
 
 pub fn service() -> impl dev::HttpServiceFactory + Mountable {
@@ -18,10 +13,10 @@ async fn logout(
     data: web::Data<ServerData>,
     _req: HttpRequest,
     identity: Identity,
-) -> Result<HttpResponse, LogoutError> {
+) -> Result<NoContent, LogoutError> {
     let account = identity.get_account();
     data.delete_account_session(account)?;
-    Ok(HttpResponseBuilder::new(StatusCode::OK).finish())
+    Ok(NoContent)
 }
 
 #[derive(Fail, Debug)]

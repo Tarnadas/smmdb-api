@@ -3,7 +3,7 @@ use crate::server::ServerData;
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema, NoContent};
 use serde::Deserialize;
 use smmdb_auth::Identity;
 use smmdb_common::Difficulty;
@@ -20,7 +20,7 @@ pub async fn post_meta(
     meta: web::Json<PostCourse2Meta>,
     _req: HttpRequest,
     identity: Identity,
-) -> Result<HttpResponse, PostCourse2MetaError> {
+) -> Result<NoContent, PostCourse2MetaError> {
     let course_id = path.into_inner();
     let course_id = ObjectId::with_string(&course_id)?;
     let account = identity.get_account();
@@ -29,7 +29,7 @@ pub async fn post_meta(
     }
     let difficulty = meta.difficulty.clone();
     data.post_course2_meta(course_id, difficulty)?;
-    Ok(HttpResponse::NoContent().into())
+    Ok(NoContent)
 }
 
 #[derive(Debug, Fail)]

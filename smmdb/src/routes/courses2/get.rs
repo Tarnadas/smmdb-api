@@ -9,7 +9,7 @@ use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_qs::actix::QsQuery;
 use smmdb_auth::Identity;
-use smmdb_common::Difficulty;
+use smmdb_common::{Course2Response, Difficulty};
 use std::{
     convert::{TryFrom, TryInto},
     io,
@@ -20,12 +20,12 @@ pub async fn get_courses(
     data: web::Data<ServerData>,
     query: QsQuery<GetCourses2>,
     identity: Option<Identity>,
-) -> Result<String, GetCourses2Error> {
-    let res = serde_json::to_string(&data.get_courses2(
+) -> Result<web::Json<Vec<Course2Response>>, GetCourses2Error> {
+    let res = data.get_courses2(
         query.into_inner(),
         identity.map(|identity| identity.get_account()),
-    )?)?;
-    Ok(res)
+    )?;
+    Ok(web::Json(res))
 }
 
 fn is_true() -> bool {

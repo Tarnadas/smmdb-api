@@ -32,7 +32,7 @@ impl TryFrom<OrderedDocument> for Course2 {
     fn try_from(document: OrderedDocument) -> Result<Course2, Self::Error> {
         let course = Bson::from(document);
         let course: serde_json::Value = course.into();
-        Ok(serde_json::from_value(course)?)
+        serde_json::from_value(course)
     }
 }
 

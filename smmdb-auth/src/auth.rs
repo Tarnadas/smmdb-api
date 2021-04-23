@@ -34,11 +34,11 @@ impl From<OrderedDocument> for AuthSession {
     }
 }
 
-impl Into<OrderedDocument> for AuthSession {
-    fn into(self) -> OrderedDocument {
+impl From<AuthSession> for OrderedDocument {
+    fn from(val: AuthSession) -> Self {
         doc! {
-            "id_token" => self.id_token,
-            "expires_at" => self.expires_at,
+            "id_token" => val.id_token,
+            "expires_at" => val.expires_at,
         }
     }
 }

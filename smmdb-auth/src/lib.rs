@@ -129,12 +129,12 @@ impl From<i32> for DownloadFormat {
     }
 }
 
-impl Into<i32> for DownloadFormat {
-    fn into(self: DownloadFormat) -> i32 {
-        match self {
-            Self::WiiU => 0,
-            Self::N3DS => 1,
-            Self::Protobuf => 2,
+impl From<DownloadFormat> for i32 {
+    fn from(val: DownloadFormat) -> Self {
+        match val {
+            DownloadFormat::WiiU => 0,
+            DownloadFormat::N3DS => 1,
+            DownloadFormat::Protobuf => 2,
         }
     }
 }

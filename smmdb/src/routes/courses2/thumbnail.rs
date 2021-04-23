@@ -31,8 +31,8 @@ pub enum Size2 {
     S,
     M,
     L,
-    ORIGINAL,
-    ENCRYPTED,
+    Original,
+    Encrypted,
 }
 
 impl Size2 {
@@ -41,26 +41,26 @@ impl Size2 {
             Size2::S => (160, 90),
             Size2::M => (320, 180),
             Size2::L => (480, 270),
-            Size2::ORIGINAL => (640, 360),
-            Size2::ENCRYPTED => (640, 360),
+            Size2::Original => (640, 360),
+            Size2::Encrypted => (640, 360),
         }
     }
 }
 
 impl Default for Size2 {
     fn default() -> Self {
-        Size2::ORIGINAL
+        Size2::Original
     }
 }
 
-impl Into<String> for Size2 {
-    fn into(self) -> String {
-        match self {
+impl From<Size2> for String {
+    fn from(val: Size2) -> Self {
+        match val {
             Size2::S => "thumb_s".to_string(),
             Size2::M => "thumb_m".to_string(),
             Size2::L => "thumb_l".to_string(),
-            Size2::ORIGINAL => "thumb".to_string(),
-            Size2::ENCRYPTED => "thumb_encrypted".to_string(),
+            Size2::Original => "thumb".to_string(),
+            Size2::Encrypted => "thumb_encrypted".to_string(),
         }
     }
 }

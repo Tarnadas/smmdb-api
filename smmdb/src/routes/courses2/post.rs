@@ -14,7 +14,7 @@ use paperclip::actix::{api_v2_operation, web};
 pub async fn post_analyze_courses(
     _data: web::Data<ServerData>,
     mut payload: web::Payload,
-) -> Result<HttpResponse, PostCourses2Error> {
+) -> Result<web::Json<Vec<SMM2Course>>, PostCourses2Error> {
     let mut bytes = web::BytesMut::new();
     while let Some(item) = payload.next().await {
         bytes.extend_from_slice(&item?);
@@ -25,9 +25,9 @@ pub async fn post_analyze_courses(
                 .into_iter()
                 .map(|course| course.take_course())
                 .collect();
-            Ok(HttpResponse::Ok().json(courses))
+            Ok(web::Json(courses))
         }
-        Err(err) => Ok(PostCourses2Error::from(err).error_response()),
+        Err(err) => Err(PostCourses2Error::from(err)),
     }
 }
 

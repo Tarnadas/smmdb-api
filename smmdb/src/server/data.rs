@@ -148,7 +148,7 @@ impl Data {
         let doc = doc! {
             "_id" => course_id.clone()
         };
-        let thumb: String = Size2::ENCRYPTED.into();
+        let thumb: String = Size2::Encrypted.into();
         let projection = doc! {
             thumb.clone() => 1,
             "data_encrypted" => 1
@@ -170,7 +170,7 @@ impl Data {
         let doc = doc! {
             "_id" => course_id.clone()
         };
-        let thumb: String = Size2::ENCRYPTED.into();
+        let thumb: String = Size2::Encrypted.into();
         let projection = doc! {
             thumb.clone() => 1,
             "data_br" => 1,
@@ -200,7 +200,7 @@ impl Data {
         let doc = doc! {
             "_id" => course_id.clone()
         };
-        let thumb: String = Size2::ENCRYPTED.into();
+        let thumb: String = Size2::Encrypted.into();
         let projection = doc! {
             thumb.clone() => 1,
             "data_protobuf_br" => 1
@@ -239,13 +239,13 @@ impl Data {
             match thumb.get_binary_generic(&size) {
                 Ok(thumb) => Ok(thumb.clone()),
                 Err(_) => {
-                    if query.size == Size2::ORIGINAL {
+                    if query.size == Size2::Original {
                         Err(GetCourse2ThumbnailError::CourseNotFound(course_id))
                     } else {
                         let doc = doc! {
                             "_id" => course_id.clone()
                         };
-                        let size_original: String = Size2::ORIGINAL.into();
+                        let size_original: String = Size2::Original.into();
                         let projection = doc! {
                             size_original.clone() => 1
                         };
@@ -485,12 +485,10 @@ impl Data {
         let update = self.database.update_courses2(filter, update)?;
         if let Some(write_exception) = update.write_exception {
             Err(write_exception.into())
+        } else if update.matched_count == 0 {
+            Err(mongodb::Error::ArgumentError(course_id.to_string()).into())
         } else {
-            if update.matched_count == 0 {
-                Err(mongodb::Error::ArgumentError(course_id.to_string()).into())
-            } else {
-                Ok(())
-            }
+            Ok(())
         }
     }
 

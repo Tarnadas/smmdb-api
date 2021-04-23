@@ -195,7 +195,7 @@ impl Migration {
                 let update = doc! {
                     "$set" => {
                         "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data),
-                        "thumb_encrypted" => Bson::Binary(BinarySubtype::Generic, thumb.clone()),
+                        "thumb_encrypted" => Bson::Binary(BinarySubtype::Generic, thumb),
                     },
                     "$unset" => {
                         "data_gz" => "",

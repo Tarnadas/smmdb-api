@@ -1,11 +1,12 @@
 use crate::{Course2, Difficulty};
 
+use paperclip::{actix::Apiv2Schema, v2::schema::TypedData};
 use serde::{Deserialize, Serialize};
 use smmdb_auth::Account;
 use smmdb_db::Database;
 use smmdb_lib::proto::SMM2Course::SMM2Course;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Apiv2Schema, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Course2Response {
     id: String,
@@ -18,7 +19,20 @@ pub struct Course2Response {
     votes: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     own_vote: Option<i32>,
-    course: SMM2Course,
+    course: SMM2CourseWrap,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct SMM2CourseWrap(SMM2Course);
+
+impl TypedData for SMM2CourseWrap {
+    fn data_type() -> paperclip::v2::models::DataType {
+        paperclip::v2::models::DataType::Object
+    }
+
+    fn format() -> Option<paperclip::v2::models::DataTypeFormat> {
+        None
+    }
 }
 
 impl Course2Response {
@@ -41,7 +55,7 @@ impl Course2Response {
             } else {
                 None
             },
-            course: course.course,
+            course: SMM2CourseWrap(course.course),
         }
     }
 }

@@ -50,6 +50,7 @@ where
     type Request = ServiceRequest;
     type Response = ServiceResponse<B>;
     type Error = Error;
+    #[allow(clippy::type_complexity)]
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -130,17 +131,17 @@ impl TryFrom<&RequestHead> for AuthReq {
     }
 }
 
-impl Into<OrderedDocument> for AuthReq {
-    fn into(self) -> OrderedDocument {
+impl From<AuthReq> for OrderedDocument {
+    fn from(val: AuthReq) -> Self {
         let mut doc = doc! {};
-        if let Some(account_id) = self.account_id {
+        if let Some(account_id) = val.account_id {
             doc.insert("_id", account_id);
         }
-        if let Some(session) = self.session {
+        if let Some(session) = val.session {
             let session: OrderedDocument = session.into();
             doc.insert("session", session);
         }
-        if let Some(apikey) = self.apikey {
+        if let Some(apikey) = val.apikey {
             doc.insert("apikey", apikey);
         }
         doc

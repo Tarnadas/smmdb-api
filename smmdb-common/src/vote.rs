@@ -23,6 +23,6 @@ impl TryFrom<OrderedDocument> for Vote {
     fn try_from(document: OrderedDocument) -> Result<Vote, Self::Error> {
         let course = Bson::from(document);
         let course: serde_json::Value = course.into();
-        Ok(serde_json::from_value(course)?)
+        serde_json::from_value(course)
     }
 }

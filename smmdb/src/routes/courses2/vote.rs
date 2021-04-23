@@ -3,7 +3,7 @@ use crate::server::ServerData;
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
+use paperclip::actix::{api_v2_operation, web, Apiv2Schema, NoContent};
 use serde::Deserialize;
 use smmdb_auth::Identity;
 
@@ -19,7 +19,7 @@ pub async fn vote_course(
     body: web::Json<VoteCourse2>,
     _req: HttpRequest,
     identity: Identity,
-) -> Result<HttpResponse, VoteCourse2Error> {
+) -> Result<NoContent, VoteCourse2Error> {
     let course_id = path.into_inner();
     let course_oid = ObjectId::with_string(&course_id)?;
     let account = identity.get_account();
@@ -30,10 +30,10 @@ pub async fn vote_course(
     // }
 
     if body.value > 1 || body.value < -1 {
-        return Err(VoteCourse2Error::BadValue(body.value).into());
+        return Err(VoteCourse2Error::BadValue(body.value));
     }
     data.vote_course2(account.get_id().clone(), course_oid, body.value)?;
-    Ok(HttpResponse::NoContent().into())
+    Ok(NoContent)
 }
 
 #[derive(Debug, Fail)]

@@ -27,7 +27,7 @@ pub async fn put_courses(
     query: QsQuery<PutCourses2>,
     mut payload: web::Payload,
     identity: Identity,
-) -> Result<HttpResponse, PutCourses2Error> {
+) -> Result<web::Json<PutCourses2Response>, PutCourses2Error> {
     let query = query.into_inner();
     let mut bytes = web::BytesMut::new();
     while let Some(item) = payload.next().await {
@@ -37,15 +37,15 @@ pub async fn put_courses(
         Ok(courses) => {
             let account = identity.get_account();
             match data.put_courses2(courses, &account, query.difficulty) {
-                Ok(res) => Ok(res.into()),
-                Err(_) => Ok(HttpResponse::BadRequest().into()),
+                Ok(res) => Ok(web::Json(res)),
+                Err(err) => Err(err),
             }
         }
-        Err(err) => Ok(PutCourses2Error::from(err).error_response()),
+        Err(err) => Err(PutCourses2Error::from(err)),
     }
 }
 
-#[derive(Debug, Fail)]
+#[derive(Apiv2Schema, Debug, Fail)]
 pub enum PutCourses2Error {
     #[fail(display = "[PutCourses2Error::Course2SimilarityError]: {}", _0)]
     Similarity(Course2SimilarityError),
@@ -121,7 +121,7 @@ impl Serialize for PutCourses2Error {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Apiv2Schema, Debug, Serialize)]
 pub struct PutCourses2Response {
     succeeded: Vec<Course2Response>,
     failed: Vec<PutCourses2Error>,
@@ -144,8 +144,8 @@ impl PutCourses2Response {
     }
 }
 
-impl Into<HttpResponse> for PutCourses2Response {
-    fn into(self: PutCourses2Response) -> HttpResponse {
-        HttpResponse::Ok().json(self)
+impl Default for PutCourses2Response {
+    fn default() -> Self {
+        Self::new()
     }
 }
