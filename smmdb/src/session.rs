@@ -1,13 +1,8 @@
 use crate::server::ServerData;
 
-use actix_service::{Service, Transform};
+// use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
-use actix_web::{
-    dev::{RequestHead, ServiceRequest, ServiceResponse},
-    http::header,
-    web::Data,
-    Error,
-};
+use actix_web::{Error, dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform}, http::header, web::Data};
 use bson::{oid::ObjectId, ordered::OrderedDocument};
 use futures::future::{ok, Future, Ready};
 use smmdb_auth::{AuthSession, Identity};
@@ -51,7 +46,7 @@ where
     type Response = ServiceResponse<B>;
     type Error = Error;
     #[allow(clippy::type_complexity)]
-    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+    type Future = Pin<Box<dyn Future<Output = Result<S::Response, S::Error>>>>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)

@@ -73,7 +73,7 @@ impl Migration {
         for account in accounts {
             let apikey = account.get_str("apikey");
             if apikey.is_err() || apikey == Ok("") {
-                let apikey: String = thread_rng().sample_iter(&Alphanumeric).take(30).collect();
+                let apikey: String = thread_rng().sample_iter(&Alphanumeric).take(30).map(char::from).collect();
                 let filter = doc! {
                     "_id" => account.get_object_id("_id").unwrap().to_owned()
                 };
@@ -126,7 +126,7 @@ impl Migration {
             let mut course_data = vec![];
             gz.read_to_end(&mut course_data)?;
 
-            let course = smmdb_lib::Course2::from_switch_files(course_data, None, false).unwrap();
+            let course = smmdb_lib::Course2::from_switch_files(&mut course_data, None, false).unwrap();
             let course_meta = serde_json::to_value(course.get_course()).unwrap();
             if let Bson::Document(doc_meta) = Bson::from(course_meta) {
                 let filter = doc! {
@@ -253,9 +253,9 @@ impl Migration {
     fn add_smmdb_id_to_course(
         database: &Database,
         course_id: String,
-        data: Vec<u8>,
+        mut data: Vec<u8>,
     ) -> Result<(), mongodb::Error> {
-        let mut course = smmdb_lib::Course2::from_switch_files(data, None, true).unwrap();
+        let mut course = smmdb_lib::Course2::from_switch_files(&mut data, None, true).unwrap();
         course.set_smmdb_id(course_id.clone()).unwrap();
         let mut course_data = course.get_course_data().clone();
         smmdb_lib::Course2::encrypt(&mut course_data);

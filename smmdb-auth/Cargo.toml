@@ -12,5 +12,5 @@ chrono = "0.4"
 failure = "0.1"
 futures = "0.3"
 paperclip = { version = "0.5", features = ["actix-nightly", "serde_qs"] }
-rand = "0.7"
+rand = "0.8"
 serde = "1"

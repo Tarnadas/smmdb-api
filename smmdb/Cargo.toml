@@ -7,10 +7,8 @@ edition = "2018"
 [dependencies]
 actix-cors = "0.5"
 actix-http = { version = "2", features = [ "rustls" ] }
-actix-service = "1"
 actix-session = "0.4"
 actix-web = "3"
-actix-rt = "1"
 awc = "2"
 brotli2 = "0.3"
 bson = "0.14"
@@ -24,7 +22,7 @@ num_cpus = "1"
 paperclip = { version = "0.5", features = ["actix-nightly", "actix-session", "serde_qs"] }
 parking_lot = "0.11"
 protobuf = "2"
-rand = "0.7"
+rand = "0.8"
 rayon = "1"
 regex = "1"
 serde = "1"
@@ -33,6 +31,6 @@ serde_qs = { version = "0.8", features = ["actix"] }
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-common = { path = "../smmdb-common" }
 smmdb-db = { path = "../smmdb-db" }
-smmdb-lib = { version = "1", package = "smmdb" }
+smmdb-lib = { version = "2", package = "smmdb", git = "https://github.com/Tarnadas/smmdb-lib.git" }
 tar = "0.4"
-zstd = "0.5"
+zstd = "0.7"

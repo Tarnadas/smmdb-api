@@ -16,7 +16,7 @@ use server::Server;
 use smmdb_db::Database;
 use std::io;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> io::Result<()> {
     println!("Starting...");
     std::env::set_var("RUST_BACKTRACE", "1");
