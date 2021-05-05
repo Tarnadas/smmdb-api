@@ -5,13 +5,14 @@ use crate::{
 
 use actix_web::{dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema, Mountable};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, Mountable};
 use protobuf::ProtobufEnum;
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
 use smmdb_lib::proto::SMMCourse::{
     SMMCourse_AutoScroll, SMMCourse_CourseTheme, SMMCourse_GameStyle,
 };
+use thiserror::Error;
 
 pub fn service() -> impl dev::HttpServiceFactory + Mountable {
     web::resource("/courses").route(web::get().to(get_courses))
@@ -94,7 +95,7 @@ impl GetCourses {
                 .iter()
                 .map(|id| -> Result<Bson, GetCoursesError> {
                     let object_id = ObjectId::with_string(id)
-                        .map_err(|_| GetCoursesError::DeserializeError("ids".to_string()))?;
+                        .map_err(|_| GetCoursesError::Deserialize("ids".to_string()))?;
                     Ok(Bson::ObjectId(object_id))
                 })
                 .filter_map(Result::ok)
@@ -219,7 +220,7 @@ impl GetCourses {
         doc.insert_bson(
             key.clone(),
             Bson::ObjectId(
-                ObjectId::with_string(oid).map_err(|_| GetCoursesError::DeserializeError(key))?,
+                ObjectId::with_string(oid).map_err(|_| GetCoursesError::Deserialize(key))?,
             ),
         );
         Ok(())
@@ -277,15 +278,16 @@ impl Default for Limit {
     }
 }
 
-#[derive(Apiv2Schema, Debug, Fail)]
+#[api_v2_errors(code = 400)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum GetCoursesError {
-    #[fail(display = "limit must be at least 1")]
+    #[error("[GetCoursesError::LimitTooLow]: limit must be at least 1")]
     LimitTooLow,
-    #[fail(display = "limit must be at most 120")]
+    #[error("[GetCoursesError::LimitTooHigh]: limit must be at most 120")]
     LimitTooHigh,
-    #[fail(display = "could not deserialize {} fom hex string", _0)]
-    DeserializeError(String),
-    #[fail(display = "uploader with name {} unknown", _0)]
+    #[error("[GetCoursesError::Deserialize]: {0}")]
+    Deserialize(String),
+    #[error("[GetCoursesError::UploaderUnknown]: {0}")]
     UploaderUnknown(String),
 }
 
@@ -294,7 +296,7 @@ impl ResponseError for GetCoursesError {
         match *self {
             GetCoursesError::LimitTooLow => HttpResponse::new(StatusCode::BAD_REQUEST),
             GetCoursesError::LimitTooHigh => HttpResponse::new(StatusCode::BAD_REQUEST),
-            GetCoursesError::DeserializeError(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            GetCoursesError::Deserialize(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             GetCoursesError::UploaderUnknown(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
         }
     }

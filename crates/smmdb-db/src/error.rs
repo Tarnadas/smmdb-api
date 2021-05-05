@@ -1,12 +1,16 @@
+use std::io;
+
 use bson::ordered::OrderedDocument;
+use thiserror::Error;
 
+#[derive(Debug, Error)]
 pub enum DatabaseError {
-    Course2ConvertError(OrderedDocument, serde_json::Error),
-    Mongo(mongodb::Error),
-}
-
-impl From<mongodb::Error> for DatabaseError {
-    fn from(err: mongodb::Error) -> Self {
-        DatabaseError::Mongo(err)
-    }
+    #[error("[Course2ConvertError]: {0}\n{1}")]
+    Course2Convert(OrderedDocument, serde_json::Error),
+    #[error(transparent)]
+    Smmdb(#[from] smmdb_lib::Error),
+    #[error(transparent)]
+    Mongo(#[from] mongodb::Error),
+    #[error(transparent)]
+    Io(#[from] io::Error),
 }

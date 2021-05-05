@@ -3,6 +3,7 @@ use crate::IdInfo;
 use bson::ordered::OrderedDocument;
 use serde::Serialize;
 use std::convert::TryFrom;
+use thiserror::Error;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct AccountReq {
@@ -50,12 +51,12 @@ impl TryFrom<IdInfo> for AccountReq {
     }
 }
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Error)]
 pub enum AccountConvertError {
-    #[fail(display = "email missing in OAuth2 response")]
+    #[error("email missing in OAuth2 response")]
     EmailMissing,
-    #[fail(display = "email not verified")]
+    #[error("email not verified")]
     EmailNotVerified,
-    #[fail(display = "parsing username from email failed")]
+    #[error("parsing username from email failed")]
     EmailParsingFailed,
 }

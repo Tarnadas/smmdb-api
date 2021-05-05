@@ -3,9 +3,10 @@ use crate::server::ServerData;
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema, NoContent};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, NoContent};
 use serde::Deserialize;
 use smmdb_auth::Identity;
+use thiserror::Error;
 
 #[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct VoteCourse2 {
@@ -36,33 +37,17 @@ pub async fn vote_course(
     Ok(NoContent)
 }
 
-#[derive(Debug, Fail)]
+#[api_v2_errors(code = 400, code = 404, code = 500)]
+#[derive(Debug, Error)]
 pub enum VoteCourse2Error {
-    #[fail(display = "Object id invalid.\nReason: {}", _0)]
-    MongoOid(bson::oid::Error),
-    #[fail(display = "Course with ID {} not found", _0)]
+    #[error("[VoteCourse2Error::MongoOid]: {0}")]
+    MongoOid(#[from] bson::oid::Error),
+    #[error("[VoteCourse2Error::ObjectIdUnknown]: {0}")]
     ObjectIdUnknown(String),
-    #[fail(display = "[VoteCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-    #[fail(display = "value not within allowed range: {}", _0)]
+    #[error("[VoteCourse2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
+    #[error("[VoteCourse2Error::BadValue]: {0}")]
     BadValue(i32),
-    // #[fail(display = "")]
-    // Unauthorized,
-}
-
-impl From<bson::oid::Error> for VoteCourse2Error {
-    fn from(err: bson::oid::Error) -> Self {
-        match err {
-            bson::oid::Error::ArgumentError(s) => VoteCourse2Error::ObjectIdUnknown(s),
-            _ => VoteCourse2Error::MongoOid(err),
-        }
-    }
-}
-
-impl From<mongodb::Error> for VoteCourse2Error {
-    fn from(err: mongodb::Error) -> Self {
-        VoteCourse2Error::Mongo(err)
-    }
 }
 
 impl ResponseError for VoteCourse2Error {
@@ -72,7 +57,6 @@ impl ResponseError for VoteCourse2Error {
             VoteCourse2Error::ObjectIdUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             VoteCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             VoteCourse2Error::BadValue(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            // VoteCourse2Error::Unauthorized => HttpResponse::new(StatusCode::UNAUTHORIZED),
         };
         res.set_body(Body::from(format!("{}", self)))
     }

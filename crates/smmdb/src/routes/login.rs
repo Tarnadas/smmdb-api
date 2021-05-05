@@ -5,10 +5,11 @@ use actix_web::{
     client::Client, dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse,
 };
 use awc::{error::JsonPayloadError, SendClientRequest};
-use paperclip::actix::{api_v2_operation, web, Mountable};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, Mountable};
 use serde::Deserialize;
 use smmdb_auth::{AccountConvertError, AccountReq, AccountRes, AuthSession, IdInfo, Identity};
 use std::convert::TryInto;
+use thiserror::Error;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -82,44 +83,21 @@ async fn login_with_google(
     }
 }
 
-#[derive(Fail, Debug)]
+#[api_v2_errors(code = 400, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 enum LoginError {
-    #[fail(display = "[ClientIdInvalid]: {}", _0)]
+    #[error("[LoginError::ClientIdInvalid]: {0}")]
     ClientIdInvalid(String),
-    #[fail(display = "Google OAuth request failed")]
+    #[error("[LoginError::Request]")]
     Request,
-    #[fail(display = "[JsonPayload]: {}", _0)]
-    JsonPayload(JsonPayloadError),
-    #[fail(display = "[SerdeJson]: {}", _0)]
-    SerdeJson(serde_json::Error),
-    #[fail(display = "[AccountConvert]: {}", _0)]
-    AccountConvert(AccountConvertError),
-    #[fail(display = "[MongodbError]: {}", _0)]
-    MongodbError(mongodb::Error),
-}
-
-impl From<JsonPayloadError> for LoginError {
-    fn from(err: JsonPayloadError) -> Self {
-        LoginError::JsonPayload(err)
-    }
-}
-
-impl From<serde_json::Error> for LoginError {
-    fn from(err: serde_json::Error) -> Self {
-        LoginError::SerdeJson(err)
-    }
-}
-
-impl From<AccountConvertError> for LoginError {
-    fn from(err: AccountConvertError) -> Self {
-        LoginError::AccountConvert(err)
-    }
-}
-
-impl From<mongodb::Error> for LoginError {
-    fn from(err: mongodb::Error) -> Self {
-        LoginError::MongodbError(err)
-    }
+    #[error("[LoginError::JsonPayload]: {0}")]
+    JsonPayload(#[from] JsonPayloadError),
+    #[error("[LoginError::SerdeJson]: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("[LoginError::AccountConvert]: {0}")]
+    AccountConvert(#[from] AccountConvertError),
+    #[error("[LoginError::Mongodb]: {0}")]
+    Mongodb(#[from] mongodb::Error),
 }
 
 impl ResponseError for LoginError {
@@ -130,7 +108,7 @@ impl ResponseError for LoginError {
             LoginError::JsonPayload(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             LoginError::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             LoginError::AccountConvert(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            LoginError::MongodbError(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            LoginError::Mongodb(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
         }
     }
 }

@@ -3,10 +3,11 @@ use crate::server::ServerData;
 use actix_http::body::Body;
 use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema, NoContent};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, NoContent};
 use serde::Deserialize;
 use smmdb_auth::Identity;
 use smmdb_common::Difficulty;
+use thiserror::Error;
 
 #[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct PostCourse2Meta {
@@ -32,39 +33,19 @@ pub async fn post_meta(
     Ok(NoContent)
 }
 
-#[derive(Debug, Fail)]
+#[api_v2_errors(code = 400, code = 401, code = 404, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum PostCourse2MetaError {
-    #[fail(display = "Object id invalid.\nReason: {}", _0)]
-    MongoOid(bson::oid::Error),
-    #[fail(display = "Course with ID {} not found", _0)]
+    #[error("[PutCourses2Error::MongoOid]: {0}")]
+    MongoOid(#[from] bson::oid::Error),
+    #[error("[PutCourses2Error::ObjectIdUnknown]: {0}")]
     ObjectIdUnknown(String),
-    #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-    #[fail(display = "[PutCourses2Error::MongoCollWriteException]: {}", _0)]
-    MongoColl(mongodb::coll::error::WriteException),
-    #[fail(display = "")]
+    #[error("[PutCourses2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
+    #[error("[PutCourses2Error::MongoColl]: {0}")]
+    MongoColl(#[from] mongodb::coll::error::WriteException),
+    #[error("[PutCourses2Error::Unauthorized]")]
     Unauthorized,
-}
-
-impl From<bson::oid::Error> for PostCourse2MetaError {
-    fn from(err: bson::oid::Error) -> Self {
-        match err {
-            bson::oid::Error::ArgumentError(s) => PostCourse2MetaError::ObjectIdUnknown(s),
-            _ => PostCourse2MetaError::MongoOid(err),
-        }
-    }
-}
-
-impl From<mongodb::Error> for PostCourse2MetaError {
-    fn from(err: mongodb::Error) -> Self {
-        PostCourse2MetaError::Mongo(err)
-    }
-}
-
-impl From<mongodb::coll::error::WriteException> for PostCourse2MetaError {
-    fn from(err: mongodb::coll::error::WriteException) -> Self {
-        PostCourse2MetaError::MongoColl(err)
-    }
 }
 
 impl ResponseError for PostCourse2MetaError {

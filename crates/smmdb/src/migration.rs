@@ -73,7 +73,11 @@ impl Migration {
         for account in accounts {
             let apikey = account.get_str("apikey");
             if apikey.is_err() || apikey == Ok("") {
-                let apikey: String = thread_rng().sample_iter(&Alphanumeric).take(30).map(char::from).collect();
+                let apikey: String = thread_rng()
+                    .sample_iter(&Alphanumeric)
+                    .take(30)
+                    .map(char::from)
+                    .collect();
                 let filter = doc! {
                     "_id" => account.get_object_id("_id").unwrap().to_owned()
                 };
@@ -97,7 +101,7 @@ impl Migration {
             .into_par_iter()
             .filter_map(Result::err)
             .filter_map(|err| match err {
-                DatabaseError::Course2ConvertError(doc, err) => Some((doc, err)),
+                DatabaseError::Course2Convert(doc, err) => Some((doc, err)),
                 _ => None,
             })
             .for_each(|(doc, _err)| {
@@ -126,7 +130,8 @@ impl Migration {
             let mut course_data = vec![];
             gz.read_to_end(&mut course_data)?;
 
-            let course = smmdb_lib::Course2::from_switch_files(&mut course_data, None, false).unwrap();
+            let course =
+                smmdb_lib::Course2::from_switch_files(&mut course_data, None, false).unwrap();
             let course_meta = serde_json::to_value(course.get_course()).unwrap();
             if let Bson::Document(doc_meta) = Bson::from(course_meta) {
                 let filter = doc! {
@@ -257,15 +262,15 @@ impl Migration {
     ) -> Result<(), mongodb::Error> {
         let mut course = smmdb_lib::Course2::from_switch_files(&mut data, None, true).unwrap();
         course.set_smmdb_id(course_id.clone()).unwrap();
-        let mut course_data = course.get_course_data().clone();
-        smmdb_lib::Course2::encrypt(&mut course_data);
+        let course_data = course.get_course_data_mut();
+        smmdb_lib::Course2::encrypt(course_data);
 
         let filter = doc! {
             "_id" => ObjectId::with_string(&course_id)?,
         };
         let update = doc! {
             "$set" => {
-                "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data),
+                "data_encrypted" => Bson::Binary(BinarySubtype::Generic, course_data.to_vec()),
             }
         };
         database
@@ -287,7 +292,7 @@ impl Migration {
                 let course: Course2 = item
                     .clone()
                     .try_into()
-                    .map_err(|err| DatabaseError::Course2ConvertError(item, err))?;
+                    .map_err(|err| DatabaseError::Course2Convert(item, err))?;
                 Ok(course)
             })
             .collect();

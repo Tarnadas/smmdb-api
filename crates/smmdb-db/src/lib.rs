@@ -96,7 +96,7 @@ impl Database {
         let listed_indexes: Vec<OrderedDocument> =
             accounts.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
-            if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
+            if !listed_indexes.iter().any(|idx| idx == &index) {
                 accounts.create_index(index, None)?;
             }
         }
@@ -143,7 +143,7 @@ impl Database {
         let listed_indexes: Vec<OrderedDocument> =
             courses2.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
-            if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
+            if !listed_indexes.iter().any(|idx| idx == &index) {
                 courses2.create_index(index, None)?;
             }
         }
@@ -158,7 +158,7 @@ impl Database {
         let listed_indexes: Vec<OrderedDocument> =
             votes.list_indexes()?.filter_map(Result::ok).collect();
         for index in indexes {
-            if listed_indexes.iter().find(|idx| idx == &&index).is_none() {
+            if !listed_indexes.iter().any(|idx| idx == &index) {
                 votes.create_index(index, None)?;
             }
         }
@@ -252,7 +252,7 @@ impl Database {
             mongodb::Error::ResponseError("inserted_id is not an ObjectId".to_string())
         })?;
         course.set_smmdb_id(inserted_id.to_string()).unwrap();
-        let mut course_data = course.get_course_data().clone();
+        let mut course_data = course.get_course_data().to_vec();
         smmdb_lib::Course2::encrypt(&mut course_data);
         let doc = doc! {
             "_id" => inserted_id.clone(),
@@ -443,12 +443,12 @@ impl Database {
         &self,
         course_id: ObjectId,
         course: OrderedDocument,
-    ) -> Result<Vec<u8>, mongodb::Error> {
+    ) -> Result<Vec<u8>, DatabaseError> {
         use std::io::prelude::*;
 
         let bson_course = course.get("data_encrypted").unwrap();
         if let Bson::Binary(_, mut course_data) = bson_course.clone() {
-            smmdb_lib::Course2::decrypt(&mut course_data);
+            smmdb_lib::Course2::decrypt(&mut course_data)?;
 
             let mut data_br = vec![];
             let mut params = CompressParams::new();
@@ -474,12 +474,12 @@ impl Database {
         &self,
         course_id: ObjectId,
         course: OrderedDocument,
-    ) -> Result<Vec<u8>, mongodb::Error> {
+    ) -> Result<Vec<u8>, DatabaseError> {
         use std::io::prelude::*;
 
         let bson_course = course.get("data_encrypted").unwrap();
         if let Bson::Binary(_, mut course_data) = bson_course.clone() {
-            let course = smmdb_lib::Course2::from_switch_files(&mut course_data, None, true).unwrap();
+            let course = smmdb_lib::Course2::from_switch_files(&mut course_data, None, true)?;
             let course_data = course.get_proto();
 
             let mut data_br = vec![];

@@ -14,6 +14,7 @@ use std::{
     convert::{TryFrom, TryInto},
     io,
 };
+use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
 pub async fn get_courses(
@@ -90,7 +91,7 @@ impl GetCourses2 {
                 .iter()
                 .map(|id| -> Result<Bson, GetCourses2Error> {
                     let object_id = ObjectId::with_string(id)
-                        .map_err(|_| GetCourses2Error::DeserializeError("ids".to_string()))?;
+                        .map_err(|_| GetCourses2Error::Deserialize("ids".to_string()))?;
                     Ok(Bson::ObjectId(object_id))
                 })
                 .filter_map(Result::ok)
@@ -211,7 +212,7 @@ impl GetCourses2 {
         doc.insert_bson(
             key.clone(),
             Bson::ObjectId(
-                ObjectId::with_string(oid).map_err(|_| GetCourses2Error::DeserializeError(key))?,
+                ObjectId::with_string(oid).map_err(|_| GetCourses2Error::Deserialize(key))?,
             ),
         );
         Ok(())
@@ -313,34 +314,22 @@ where
     code = 404,
     code = 500
 )]
-#[derive(Debug, Fail)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum GetCourses2Error {
-    #[fail(display = "could not deserialize {} from hex string", _0)]
-    DeserializeError(String),
-    #[fail(display = "uploader with name {} unknown", _0)]
+    #[error("[GetCourses2Error::Deserialize]: {0}")]
+    Deserialize(String),
+    #[error("[GetCourses2Error::UploaderUnknown]: {0}")]
     UploaderUnknown(String),
-    #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
-    SerdeJson(serde_json::Error),
-    #[fail(display = "[GetCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-}
-
-impl From<serde_json::Error> for GetCourses2Error {
-    fn from(err: serde_json::Error) -> Self {
-        GetCourses2Error::SerdeJson(err)
-    }
-}
-
-impl From<mongodb::Error> for GetCourses2Error {
-    fn from(err: mongodb::Error) -> Self {
-        GetCourses2Error::Mongo(err)
-    }
+    #[error("[GetCourses2Error::SerdeJson]: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("[GetCourses2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
 }
 
 impl ResponseError for GetCourses2Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
-            GetCourses2Error::DeserializeError(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            GetCourses2Error::Deserialize(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             GetCourses2Error::UploaderUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             GetCourses2Error::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             GetCourses2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),

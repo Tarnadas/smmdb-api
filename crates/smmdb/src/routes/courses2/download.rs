@@ -3,11 +3,13 @@ use crate::server::ServerData;
 use actix_http::http::header;
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::{oid::ObjectId, ValueAccessError};
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
+use smmdb_db::DatabaseError;
 use std::{io, time::SystemTime};
 use tar::{Builder, Header};
+use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
 pub async fn download_course(
@@ -113,42 +115,21 @@ impl Default for ThumbFormat {
     }
 }
 
-#[derive(Debug, Fail)]
+#[api_v2_errors(code = 400, code = 404, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum DownloadCourse2Error {
-    #[fail(display = "")]
+    #[error("[DownloadCourse2Error::CourseNotFound]")]
     CourseNotFound(ObjectId),
-    #[fail(display = "[DownloadCourse2Error::IoError]: {}", _0)]
-    IoError(io::Error),
-    #[fail(display = "Object id invalid.\nReason: {}", _0)]
-    MongoOid(bson::oid::Error),
-    #[fail(display = "[DownloadCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-    #[fail(display = "[DownloadCourse2Error::ValueAccessError]: {}", _0)]
-    ValueAccessError(ValueAccessError),
-}
-
-impl From<io::Error> for DownloadCourse2Error {
-    fn from(err: io::Error) -> Self {
-        DownloadCourse2Error::IoError(err)
-    }
-}
-
-impl From<bson::oid::Error> for DownloadCourse2Error {
-    fn from(err: bson::oid::Error) -> Self {
-        DownloadCourse2Error::MongoOid(err)
-    }
-}
-
-impl From<mongodb::Error> for DownloadCourse2Error {
-    fn from(err: mongodb::Error) -> Self {
-        DownloadCourse2Error::Mongo(err)
-    }
-}
-
-impl From<ValueAccessError> for DownloadCourse2Error {
-    fn from(err: ValueAccessError) -> Self {
-        DownloadCourse2Error::ValueAccessError(err)
-    }
+    #[error("[DownloadCourse2Error::IoError]: {0}")]
+    IoError(#[from] io::Error),
+    #[error("[DownloadCourse2Error::MongoOid]: {0}")]
+    MongoOid(#[from] bson::oid::Error),
+    #[error("[DownloadCourse2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
+    #[error("[DownloadCourse2Error::ValueAccess]: {0}")]
+    ValueAccess(#[from] ValueAccessError),
+    #[error("[DownloadCourse2Error::Database: {0}")]
+    Database(#[from] DatabaseError),
 }
 
 impl ResponseError for DownloadCourse2Error {
@@ -165,7 +146,10 @@ impl ResponseError for DownloadCourse2Error {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
             DownloadCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
-            DownloadCourse2Error::ValueAccessError(_) => {
+            DownloadCourse2Error::ValueAccess(_) => {
+                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+            DownloadCourse2Error::Database(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
         }

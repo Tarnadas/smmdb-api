@@ -2,9 +2,10 @@ use crate::server::ServerData;
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, Apiv2Schema};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
+use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
 pub async fn get_thumbnail(
@@ -65,34 +66,17 @@ impl From<Size2> for String {
     }
 }
 
-#[derive(Debug, Fail)]
+#[api_v2_errors(code = 400, code = 404, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum GetCourse2ThumbnailError {
-    #[fail(display = "")]
+    #[error("[GetCourse2ThumbnailError::CourseNotFound]")]
     CourseNotFound(ObjectId),
-    #[fail(display = "Object id invalid.\nReason: {}", _0)]
-    MongoOid(bson::oid::Error),
-    #[fail(display = "[GetCourse2ThumbnailError::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-    #[fail(display = "[GetCourse2ThumbnailError::Image]: {}", _0)]
-    Image(image::ImageError),
-}
-
-impl From<bson::oid::Error> for GetCourse2ThumbnailError {
-    fn from(err: bson::oid::Error) -> Self {
-        GetCourse2ThumbnailError::MongoOid(err)
-    }
-}
-
-impl From<mongodb::Error> for GetCourse2ThumbnailError {
-    fn from(err: mongodb::Error) -> Self {
-        GetCourse2ThumbnailError::Mongo(err)
-    }
-}
-
-impl From<image::ImageError> for GetCourse2ThumbnailError {
-    fn from(err: image::ImageError) -> Self {
-        GetCourse2ThumbnailError::Image(err)
-    }
+    #[error("[GetCourse2ThumbnailError::MongoOid]: {0}")]
+    MongoOid(#[from] bson::oid::Error),
+    #[error("[GetCourse2ThumbnailError::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
+    #[error("[GetCourse2ThumbnailError::Image]: {0}")]
+    Image(#[from] image::ImageError),
 }
 
 impl ResponseError for GetCourse2ThumbnailError {

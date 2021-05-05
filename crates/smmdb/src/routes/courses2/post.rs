@@ -8,7 +8,8 @@ use actix_web::{
     HttpResponse,
 };
 use futures::{self, StreamExt};
-use paperclip::actix::{api_v2_operation, web};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
+use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
 pub async fn post_analyze_courses(
@@ -31,24 +32,13 @@ pub async fn post_analyze_courses(
     }
 }
 
-#[derive(Fail, Debug)]
+#[api_v2_errors(code = 400)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum PostCourses2Error {
-    #[fail(display = "PostCourses2Error::Payload: {}", _0)]
-    Payload(PayloadError),
-    #[fail(display = "PostCourses2Error::Smmdb: {}", _0)]
-    Smmdb(smmdb_lib::Error),
-}
-
-impl From<PayloadError> for PostCourses2Error {
-    fn from(err: PayloadError) -> Self {
-        PostCourses2Error::Payload(err)
-    }
-}
-
-impl From<smmdb_lib::Error> for PostCourses2Error {
-    fn from(err: smmdb_lib::Error) -> Self {
-        PostCourses2Error::Smmdb(err)
-    }
+    #[error("[PostCourses2Error::Payload]: {0}")]
+    Payload(#[from] PayloadError),
+    #[error("[PostCourses2Error::Smmdb]: {0}")]
+    Smmdb(#[from] smmdb_lib::Error),
 }
 
 impl ResponseError for PostCourses2Error {

@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate bson;
 
-#[macro_use]
-extern crate failure;
-
 mod auth;
 mod identity;
 mod request;
@@ -70,7 +67,11 @@ impl From<OrderedDocument> for Account {
 
 impl Account {
     pub fn new(account: AccountReq, id: ObjectId, session: AuthSession) -> Self {
-        let apikey: String = thread_rng().sample_iter(&Alphanumeric).take(30).map(char::from).collect();
+        let apikey: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(30)
+            .map(char::from)
+            .collect();
         Account {
             id,
             googleid: account.googleid,

@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate bson;
 
-#[macro_use]
-extern crate failure;
-
 mod config;
 mod migration;
 mod routes;

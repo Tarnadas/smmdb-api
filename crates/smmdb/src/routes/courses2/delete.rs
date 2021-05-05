@@ -2,8 +2,9 @@ use crate::server::ServerData;
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::oid::ObjectId;
-use paperclip::actix::{api_v2_operation, web, NoContent};
+use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, NoContent};
 use smmdb_auth::Identity;
+use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
 pub async fn delete_course(
@@ -21,31 +22,17 @@ pub async fn delete_course(
     Ok(NoContent)
 }
 
-#[derive(Debug, Fail)]
+#[api_v2_errors(code = 400, code = 401, code = 404, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum DeleteCourse2Error {
-    #[fail(display = "Object id invalid.\nReason: {}", _0)]
-    MongoOid(bson::oid::Error),
-    #[fail(display = "Course with ID {} not found", _0)]
+    #[error("Object id invalid.\nReason: {0}")]
+    MongoOid(#[from] bson::oid::Error),
+    #[error("Course with ID {0} not found")]
     ObjectIdUnknown(String),
-    #[fail(display = "[DeleteCourse2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-    #[fail(display = "")]
+    #[error("[DeleteCourse2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
+    #[error("[DeleteCourse2Error::Unauthorized]")]
     Unauthorized,
-}
-
-impl From<bson::oid::Error> for DeleteCourse2Error {
-    fn from(err: bson::oid::Error) -> Self {
-        match err {
-            bson::oid::Error::ArgumentError(s) => DeleteCourse2Error::ObjectIdUnknown(s),
-            _ => DeleteCourse2Error::MongoOid(err),
-        }
-    }
-}
-
-impl From<mongodb::Error> for DeleteCourse2Error {
-    fn from(err: mongodb::Error) -> Self {
-        DeleteCourse2Error::Mongo(err)
-    }
 }
 
 impl ResponseError for DeleteCourse2Error {

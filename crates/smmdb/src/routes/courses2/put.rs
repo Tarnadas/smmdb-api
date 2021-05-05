@@ -8,12 +8,13 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use futures::{self, StreamExt};
-use paperclip::actix::{api_v2_operation, Apiv2Schema};
+use paperclip::actix::{api_v2_errors, api_v2_operation, Apiv2Schema};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_qs::actix::QsQuery;
 use smmdb_auth::Identity;
 use smmdb_common::{Course2Response, Course2SimilarityError, Difficulty};
 use std::io;
+use thiserror::Error;
 
 #[derive(Apiv2Schema, Debug, Deserialize)]
 pub struct PutCourses2 {
@@ -45,58 +46,29 @@ pub async fn put_courses(
     }
 }
 
-#[derive(Apiv2Schema, Debug, Fail)]
+#[api_v2_errors(code = 400, code = 404, code = 500)]
+#[derive(Apiv2Schema, Debug, Error)]
 pub enum PutCourses2Error {
-    #[fail(display = "[PutCourses2Error::Course2SimilarityError]: {}", _0)]
+    #[error("[PutCourses2Error::Course2SimilarityError]: {0}")]
     Similarity(Course2SimilarityError),
-    #[fail(display = "[PutCourses2Error::IoError]: {}", _0)]
-    IoError(io::Error),
-    #[fail(display = "[PutCourses2Error::Payload]: {}", _0)]
-    Payload(PayloadError),
-    #[fail(display = "[PutCourses2Error::Smmdb]: {}", _0)]
-    Smmdb(smmdb_lib::Error),
-    #[fail(display = "[PutCourses2Error::SerdeJson]: {}", _0)]
-    SerdeJson(serde_json::Error),
-    #[fail(display = "[PutCourses2Error::ThumbnailMissing]: course is missing thumbnail")]
+    #[error("[PutCourses2Error::Io]: {0}")]
+    Io(#[from] io::Error),
+    #[error("[PutCourses2Error::Payload]: {0}")]
+    Payload(#[from] PayloadError),
+    #[error("[PutCourses2Error::Smmdb]: {0}")]
+    Smmdb(#[from] smmdb_lib::Error),
+    #[error("[PutCourses2Error::SerdeJson]: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("[PutCourses2Error::ThumbnailMissing]")]
     ThumbnailMissing,
-    #[fail(display = "[PutCourses2Error::Mongo]: {}", _0)]
-    Mongo(mongodb::Error),
-}
-
-impl From<io::Error> for PutCourses2Error {
-    fn from(err: io::Error) -> Self {
-        PutCourses2Error::IoError(err)
-    }
-}
-
-impl From<PayloadError> for PutCourses2Error {
-    fn from(err: PayloadError) -> Self {
-        PutCourses2Error::Payload(err)
-    }
-}
-
-impl From<smmdb_lib::Error> for PutCourses2Error {
-    fn from(err: smmdb_lib::Error) -> Self {
-        PutCourses2Error::Smmdb(err)
-    }
-}
-
-impl From<serde_json::Error> for PutCourses2Error {
-    fn from(err: serde_json::Error) -> Self {
-        PutCourses2Error::SerdeJson(err)
-    }
-}
-
-impl From<mongodb::Error> for PutCourses2Error {
-    fn from(err: mongodb::Error) -> Self {
-        PutCourses2Error::Mongo(err)
-    }
+    #[error("[PutCourses2Error::Mongo]: {0}")]
+    Mongo(#[from] mongodb::Error),
 }
 
 impl ResponseError for PutCourses2Error {
     fn error_response(&self) -> HttpResponse {
         let res = match *self {
-            PutCourses2Error::IoError(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+            PutCourses2Error::Io(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             PutCourses2Error::Similarity(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Payload(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             PutCourses2Error::Smmdb(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
