@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use twox_hash::XxHash64;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MinHash {
     hash: Vec<u64>,
 }

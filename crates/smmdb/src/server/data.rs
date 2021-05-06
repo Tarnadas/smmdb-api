@@ -46,7 +46,7 @@ pub struct Data {
 pub type ServerData = Arc<Data>;
 
 impl Data {
-    pub fn new(database: Arc<Database>) -> Self {
+    pub fn new(database: Arc<Database>, perm_gen: PermGen) -> Self {
         let mut lsh_index = LshIndex::new(8);
         println!("Filling LshIndex");
         Data::fill_lsh_index(&database, &mut lsh_index);
@@ -54,7 +54,7 @@ impl Data {
         Data {
             database,
             google_client_id: GOOGLE_CLIENT_ID,
-            perm_gen: PermGen::new(128),
+            perm_gen,
             lsh_index: Arc::new(Mutex::new(lsh_index)),
         }
     }

@@ -6,18 +6,18 @@ use mongodb::coll::options::FindOptions;
 use parking_lot::Mutex;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rayon::prelude::*;
-use smmdb_common::Course2;
+use smmdb_common::{Course2, PermGen};
 use smmdb_db::DatabaseError;
 use std::{convert::TryInto, sync::Arc};
 use zstd::dict;
 
 pub struct Migration {
     name: String,
-    run: fn(&Database),
+    run: fn(&Database, &PermGen),
 }
 
 impl Migration {
-    pub fn migrate(database: &Database) {
+    pub fn migrate(database: &Database, perm_gen: &PermGen) {
         let mut migrations = vec![
             Migration {
                 name: "generate_api_keys".to_string(),
@@ -34,6 +34,10 @@ impl Migration {
             Migration {
                 name: "add_smmdb_id".to_string(),
                 run: Migration::add_smmdb_id,
+            },
+            Migration {
+                name: "course2_hash_v2".to_string(),
+                run: Migration::course2_hash_v2,
             },
             // TODO fix out of memory
             // Migration {
@@ -52,7 +56,7 @@ impl Migration {
             .collect();
 
         for migration in migrations {
-            (migration.run)(database);
+            (migration.run)(database, perm_gen);
             Migration::store_migration_as_completed(database, migration);
         }
     }
@@ -61,7 +65,7 @@ impl Migration {
         database.migration_completed(migration.name).unwrap();
     }
 
-    fn generate_api_keys(database: &Database) {
+    fn generate_api_keys(database: &Database, _: &PermGen) {
         let accounts: Vec<OrderedDocument> = database
             .accounts
             .find(None, None)
@@ -93,7 +97,7 @@ impl Migration {
         println!("Fixed {} accounts", fixed_count);
     }
 
-    fn migrate_bad_courses2(database: &Database) {
+    fn migrate_bad_courses2(database: &Database, _: &PermGen) {
         println!("Fixing old SMM2 course formats...");
         let fixed_count = Arc::new(Mutex::new(0u32));
         Migration::get_courses2_result(database, vec![])
@@ -148,7 +152,7 @@ impl Migration {
         Ok(())
     }
 
-    fn migrate_course2_data(database: &Database) {
+    fn migrate_course2_data(database: &Database, _: &PermGen) {
         println!("Converting SMM2 course data...");
         let fixed_count = Arc::new(Mutex::new(0u32));
         Migration::get_courses2_result(database, vec![])
@@ -216,7 +220,7 @@ impl Migration {
         Ok(true)
     }
 
-    fn add_smmdb_id(database: &Database) {
+    fn add_smmdb_id(database: &Database, _: &PermGen) {
         println!("Adding SMMDB ID to course data...");
         let fixed_count = Arc::new(Mutex::new(0u32));
         let projection = doc! {
@@ -262,8 +266,8 @@ impl Migration {
     ) -> Result<(), mongodb::Error> {
         let mut course = smmdb_lib::Course2::from_switch_files(&mut data, None, true).unwrap();
         course.set_smmdb_id(course_id.clone()).unwrap();
-        let course_data = course.get_course_data_mut();
-        smmdb_lib::Course2::encrypt(course_data);
+        let mut course_data = course.get_course_data_mut().to_vec();
+        smmdb_lib::Course2::encrypt(&mut course_data);
 
         let filter = doc! {
             "_id" => ObjectId::with_string(&course_id)?,
@@ -298,6 +302,67 @@ impl Migration {
             .collect();
 
         Ok(courses)
+    }
+
+    fn course2_hash_v2(database: &Database, perm_gen: &PermGen) {
+        println!("Adjusting course2 hashes...");
+        let fixed_count = Arc::new(Mutex::new(0u32));
+        let projection = doc! {
+            "_id" => 1,
+            "data_encrypted" => 1
+        };
+        let courses: Vec<_> = database
+            .course2_data
+            .find(
+                None,
+                Some(FindOptions {
+                    projection: Some(projection),
+                    ..Default::default()
+                }),
+            )
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter_map(|doc| {
+                if let (Bson::Binary(_, data), Bson::ObjectId(course_id)) = (
+                    doc.get("data_encrypted").unwrap().clone(),
+                    doc.get("_id").unwrap().clone(),
+                ) {
+                    Some((course_id.to_string(), data))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        courses.into_par_iter().for_each(|(course_id, data)| {
+            if Migration::adjust_hash(database, perm_gen, course_id, data).is_ok() {
+                let count = *fixed_count.lock() + 1;
+                *fixed_count.lock() = count;
+            }
+        });
+        println!("Adjusted {} course2 hashes", fixed_count.lock());
+    }
+
+    fn adjust_hash(
+        database: &Database,
+        perm_gen: &PermGen,
+        course_id: String,
+        mut data: Vec<u8>,
+    ) -> Result<(), mongodb::Error> {
+        let course = smmdb_lib::Course2::from_switch_files(&mut data, None, true).unwrap();
+        let course = Course2::insert(ObjectId::new().unwrap(), &course, None, perm_gen);
+
+        let filter = doc! {
+            "_id" => ObjectId::with_string(&course_id)?,
+        };
+        let hash = serde_json::to_value(course.get_hash()).unwrap();
+        let update = doc! {
+            "$set" => {
+                "hash" => hash,
+            }
+        };
+        database.courses2.update_one(filter, update, None).unwrap();
+        Ok(())
     }
 
     #[allow(unused)]

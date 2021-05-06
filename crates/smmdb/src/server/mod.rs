@@ -14,6 +14,7 @@ use paperclip::{
     actix::{web, OpenApiExt},
     v2::models::{DefaultApiRaw, Info, Tag},
 };
+use smmdb_common::PermGen;
 use smmdb_db::Database;
 use std::{io, sync::Arc};
 
@@ -24,11 +25,11 @@ pub use data::*;
 pub struct Server;
 
 impl Server {
-    pub fn start(database: Arc<Database>) -> Result<ActixServer, io::Error> {
+    pub fn start(database: Arc<Database>, perm_gen: PermGen) -> Result<ActixServer, io::Error> {
         println!("Starting SMMDB API server");
         std::env::set_var("RUST_LOG", "actix_web=debug");
         env_logger::init();
-        let data = Arc::new(Data::new(database));
+        let data = Arc::new(Data::new(database, perm_gen));
 
         Ok(HttpServer::new(move || {
             let spec = DefaultApiRaw {

@@ -10,6 +10,7 @@ mod session;
 use migration::Migration;
 use server::Server;
 
+use smmdb_common::PermGen;
 use smmdb_db::Database;
 use std::io;
 
@@ -20,6 +21,7 @@ async fn main() -> io::Result<()> {
     use std::sync::Arc;
 
     let database = Database::new();
-    Migration::migrate(&database);
-    Server::start(Arc::new(database)).unwrap().await
+    let perm_gen = PermGen::new(128);
+    Migration::migrate(&database, &perm_gen);
+    Server::start(Arc::new(database), perm_gen).unwrap().await
 }
