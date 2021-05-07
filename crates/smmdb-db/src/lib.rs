@@ -42,15 +42,9 @@ impl Default for Database {
 
 impl Database {
     pub fn new() -> Self {
-        let host = match env::var("DOCKER") {
-            Ok(val) => match val.as_ref() {
-                "true" | "1" => "mongodb".to_string(), // get_gateway_ip(),
-                _ => "localhost".to_string(),
-            },
-            Err(_) => "localhost".to_string(),
-        };
-        println!("Connecting to MongoDB at mongodb://{}:27017", host);
-        let client = Client::with_uri(&format!("mongodb://{}:27017", host))
+        let mongodb_uri = env::var("MONGODB_URI").unwrap();
+        println!("Connecting to MongoDB at {}", mongodb_uri);
+        let client = Client::with_uri(&mongodb_uri)
             .expect("Failed to connect to MongoDB");
         let courses = client.db("admin").collection(Collections::Courses.as_str());
         let _course_data = client

@@ -13,7 +13,6 @@ RUN set -eux; \
 
 COPY --from=tarnadas/smmdb-api-build /binary ./smmdb
 
-ENV DOCKER=true
 EXPOSE 3030
 
 CMD ["./smmdb"]
