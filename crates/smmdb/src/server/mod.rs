@@ -121,12 +121,6 @@ Chocolatey install instructions/docs [Chocolatey.org](https://chocolatey.org/ins
                 )
                 .wrap(
                     Cors::default()
-                        .allowed_methods(vec!["GET", "POST", "PUT", "OPTIONS", "DELETE"])
-                        .allowed_headers(vec![
-                            header::AUTHORIZATION,
-                            header::ACCEPT,
-                            header::CONTENT_TYPE,
-                        ])
                         .supports_credentials()
                         .max_age(3600),
                 )
