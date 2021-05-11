@@ -127,7 +127,6 @@ Chocolatey install instructions/docs [Chocolatey.org](https://chocolatey.org/ins
                             header::ACCEPT,
                             header::CONTENT_TYPE,
                         ])
-                        .allowed_origin("*")
                         .supports_credentials()
                         .max_age(3600),
                 )
