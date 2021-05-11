@@ -119,11 +119,7 @@ Chocolatey install instructions/docs [Chocolatey.org](https://chocolatey.org/ins
                         .max_age(3600 * 24 * 7)
                         .secure(false),
                 )
-                .wrap(
-                    Cors::default()
-                        .supports_credentials()
-                        .max_age(3600),
-                )
+                .wrap(Cors::permissive())
                 .wrap(Compress::default())
                 .wrap(Logger::default())
                 .build()
