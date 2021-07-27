@@ -42,8 +42,6 @@ pub async fn vote_course(
 pub enum VoteCourse2Error {
     #[error("[VoteCourse2Error::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
-    #[error("[VoteCourse2Error::ObjectIdUnknown]: {0}")]
-    ObjectIdUnknown(String),
     #[error("[VoteCourse2Error::Mongo]: {0}")]
     Mongo(#[from] mongodb::Error),
     #[error("[VoteCourse2Error::BadValue]: {0}")]
@@ -54,7 +52,6 @@ impl ResponseError for VoteCourse2Error {
     fn error_response(&self) -> HttpResponse {
         let res = match *self {
             VoteCourse2Error::MongoOid(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            VoteCourse2Error::ObjectIdUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             VoteCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             VoteCourse2Error::BadValue(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
         };

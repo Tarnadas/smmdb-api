@@ -27,8 +27,6 @@ pub async fn delete_course(
 pub enum DeleteCourse2Error {
     #[error("Object id invalid.\nReason: {0}")]
     MongoOid(#[from] bson::oid::Error),
-    #[error("Course with ID {0} not found")]
-    ObjectIdUnknown(String),
     #[error("[DeleteCourse2Error::Mongo]: {0}")]
     Mongo(#[from] mongodb::Error),
     #[error("[DeleteCourse2Error::Unauthorized]")]
@@ -39,7 +37,6 @@ impl ResponseError for DeleteCourse2Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
             DeleteCourse2Error::MongoOid(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            DeleteCourse2Error::ObjectIdUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             DeleteCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             DeleteCourse2Error::Unauthorized => HttpResponse::new(StatusCode::UNAUTHORIZED),
         }

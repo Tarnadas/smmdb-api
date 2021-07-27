@@ -6,7 +6,6 @@ use actix_session::CookieSession;
 use actix_web::{
     client::Client,
     dev::Server as ActixServer,
-    http::header,
     middleware::{Compress, Logger},
     App, HttpServer,
 };

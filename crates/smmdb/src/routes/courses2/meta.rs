@@ -38,8 +38,6 @@ pub async fn post_meta(
 pub enum PostCourse2MetaError {
     #[error("[PutCourses2Error::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
-    #[error("[PutCourses2Error::ObjectIdUnknown]: {0}")]
-    ObjectIdUnknown(String),
     #[error("[PutCourses2Error::Mongo]: {0}")]
     Mongo(#[from] mongodb::Error),
     #[error("[PutCourses2Error::MongoColl]: {0}")]
@@ -57,7 +55,6 @@ impl ResponseError for PostCourse2MetaError {
             PostCourse2MetaError::MongoOid(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
-            PostCourse2MetaError::ObjectIdUnknown(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             PostCourse2MetaError::Mongo(_) => HttpResponse::new(StatusCode::NOT_FOUND),
             PostCourse2MetaError::MongoColl(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
