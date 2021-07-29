@@ -1,0 +1,21 @@
+name: Publish
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2021-04-25
+          override: true
+
+      - name: Deploy
+        run: bash deploy.sh
