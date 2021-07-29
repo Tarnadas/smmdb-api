@@ -72,10 +72,12 @@ async fn login_with_google(
         session
             .set("expires_at", json.token_obj.expires_at)
             .unwrap();
-        let account = data.add_or_get_account(
-            account,
-            AuthSession::new(id_token.clone(), json.token_obj.expires_at),
-        )?;
+        let account = data
+            .add_or_get_account(
+                account,
+                AuthSession::new(id_token.clone(), json.token_obj.expires_at),
+            )
+            .await?;
         // TODO get stars from database
         let account = AccountRes::new(&account);
         session.set("account_id", account.get_id()).unwrap();
@@ -97,7 +99,9 @@ enum LoginError {
     #[error("[LoginError::AccountConvert]: {0}")]
     AccountConvert(#[from] AccountConvertError),
     #[error("[LoginError::Mongodb]: {0}")]
-    Mongodb(#[from] mongodb::Error),
+    Mongodb(#[from] mongodb::error::Error),
+    #[error("[LoginError::Anyhow]: {0}")]
+    Anyhow(#[from] anyhow::Error),
 }
 
 impl ResponseError for LoginError {
@@ -108,7 +112,9 @@ impl ResponseError for LoginError {
             LoginError::JsonPayload(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             LoginError::SerdeJson(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             LoginError::AccountConvert(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            LoginError::Mongodb(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
+            LoginError::Mongodb(_) | LoginError::Anyhow(_) => {
+                HttpResponse::new(StatusCode::BAD_REQUEST)
+            }
         }
     }
 }

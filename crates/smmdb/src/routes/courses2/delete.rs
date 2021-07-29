@@ -4,6 +4,7 @@ use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use bson::oid::ObjectId;
 use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, NoContent};
 use smmdb_auth::Identity;
+use smmdb_db::DatabaseError;
 use thiserror::Error;
 
 #[api_v2_operation(tags(SMM2))]
@@ -18,7 +19,7 @@ pub async fn delete_course(
     if !data.does_account_own_course(account.get_id().clone(), course_oid.clone()) {
         return Err(DeleteCourse2Error::Unauthorized);
     }
-    data.delete_course2(course_id, course_oid)?;
+    data.delete_course2(course_id, course_oid).await?;
     Ok(NoContent)
 }
 
@@ -28,7 +29,9 @@ pub enum DeleteCourse2Error {
     #[error("Object id invalid.\nReason: {0}")]
     MongoOid(#[from] bson::oid::Error),
     #[error("[DeleteCourse2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
+    Mongo(#[from] mongodb::error::Error),
+    #[error("[DatabaseError]: {0}")]
+    Database(#[from] DatabaseError),
     #[error("[DeleteCourse2Error::Unauthorized]")]
     Unauthorized,
 }
@@ -38,6 +41,7 @@ impl ResponseError for DeleteCourse2Error {
         match *self {
             DeleteCourse2Error::MongoOid(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
             DeleteCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+            DeleteCourse2Error::Database(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
             DeleteCourse2Error::Unauthorized => HttpResponse::new(StatusCode::UNAUTHORIZED),
         }
     }

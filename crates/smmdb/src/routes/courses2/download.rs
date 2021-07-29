@@ -2,7 +2,7 @@ use crate::server::ServerData;
 
 use actix_http::http::header;
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
-use bson::{oid::ObjectId, ValueAccessError};
+use bson::{document::ValueAccessError, oid::ObjectId};
 use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::Deserialize;
 use serde_qs::actix::QsQuery;
@@ -21,9 +21,11 @@ pub async fn download_course(
     let course_oid = ObjectId::with_string(&course_id)?;
 
     let (data, thumb) = match (&query.course_format, &query.thumb_format) {
-        (CourseFormat::Encrypted, ThumbFormat::Encrypted) => data.get_course2(course_oid)?,
-        (CourseFormat::Br, ThumbFormat::Encrypted) => data.get_course2_br(course_oid)?,
-        (CourseFormat::ProtobufBr, ThumbFormat::Encrypted) => data.get_course2_proto(course_oid)?,
+        (CourseFormat::Encrypted, ThumbFormat::Encrypted) => data.get_course2(course_oid).await?,
+        (CourseFormat::Br, ThumbFormat::Encrypted) => data.get_course2_br(course_oid).await?,
+        (CourseFormat::ProtobufBr, ThumbFormat::Encrypted) => {
+            data.get_course2_proto(course_oid).await?
+        }
     };
 
     match query.file_format {
@@ -125,11 +127,11 @@ pub enum DownloadCourse2Error {
     #[error("[DownloadCourse2Error::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
     #[error("[DownloadCourse2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
-    #[error("[DownloadCourse2Error::ValueAccess]: {0}")]
-    ValueAccess(#[from] ValueAccessError),
+    Mongo(#[from] mongodb::error::Error),
     #[error("[DownloadCourse2Error::Database: {0}")]
     Database(#[from] DatabaseError),
+    #[error("[DownloadCourse2Error::ValueAccessError: {0}")]
+    ValueAccess(#[from] ValueAccessError),
 }
 
 impl ResponseError for DownloadCourse2Error {
@@ -146,10 +148,10 @@ impl ResponseError for DownloadCourse2Error {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
             DownloadCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
-            DownloadCourse2Error::ValueAccess(_) => {
+            DownloadCourse2Error::Database(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
-            DownloadCourse2Error::Database(_) => {
+            DownloadCourse2Error::ValueAccess(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
         }

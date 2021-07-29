@@ -1,9 +1,13 @@
 use crate::server::ServerData;
 
-// use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
-use actix_web::{Error, dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform}, http::header, web::Data};
-use bson::{oid::ObjectId, ordered::OrderedDocument};
+use actix_web::{
+    dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform},
+    http::header,
+    web::Data,
+    Error,
+};
+use bson::{oid::ObjectId, Document};
 use futures::future::{ok, Future, Ready};
 use smmdb_auth::{AuthSession, Identity};
 use std::{
@@ -126,14 +130,14 @@ impl TryFrom<&RequestHead> for AuthReq {
     }
 }
 
-impl From<AuthReq> for OrderedDocument {
+impl From<AuthReq> for Document {
     fn from(val: AuthReq) -> Self {
         let mut doc = doc! {};
         if let Some(account_id) = val.account_id {
             doc.insert("_id", account_id);
         }
         if let Some(session) = val.session {
-            let session: OrderedDocument = session.into();
+            let session: Document = session.into();
             doc.insert("session", session);
         }
         if let Some(apikey) = val.apikey {

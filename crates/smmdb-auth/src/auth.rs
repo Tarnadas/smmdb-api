@@ -1,4 +1,4 @@
-use bson::ordered::OrderedDocument;
+use bson::Document;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize)]
@@ -20,8 +20,8 @@ impl AuthSession {
     }
 }
 
-impl From<OrderedDocument> for AuthSession {
-    fn from(document: OrderedDocument) -> Self {
+impl From<Document> for AuthSession {
+    fn from(document: Document) -> Self {
         AuthSession {
             id_token: document
                 .get_str("id_token")
@@ -34,11 +34,11 @@ impl From<OrderedDocument> for AuthSession {
     }
 }
 
-impl From<AuthSession> for OrderedDocument {
+impl From<AuthSession> for Document {
     fn from(val: AuthSession) -> Self {
         doc! {
-            "id_token" => val.id_token,
-            "expires_at" => val.expires_at,
+            "id_token": val.id_token,
+            "expires_at": val.expires_at,
         }
     }
 }

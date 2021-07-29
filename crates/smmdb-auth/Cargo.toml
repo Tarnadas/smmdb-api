@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 actix-http = { version = "2", features = [ "rustls" ] }
 actix-web = "3"
-bson = "0.14"
+bson = "1"
 chrono = "0.4"
 futures = "0.3"
 paperclip = { version = "0.5", features = ["actix-nightly", "serde_qs"] }

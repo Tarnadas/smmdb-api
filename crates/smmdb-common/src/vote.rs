@@ -1,4 +1,4 @@
-use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use bson::{oid::ObjectId, Bson, Document};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -17,10 +17,10 @@ impl Vote {
     }
 }
 
-impl TryFrom<OrderedDocument> for Vote {
+impl TryFrom<Document> for Vote {
     type Error = serde_json::Error;
 
-    fn try_from(document: OrderedDocument) -> Result<Vote, Self::Error> {
+    fn try_from(document: Document) -> Result<Vote, Self::Error> {
         let course = Bson::from(document);
         let course: serde_json::Value = course.into();
         serde_json::from_value(course)

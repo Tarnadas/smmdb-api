@@ -16,7 +16,9 @@ pub async fn get_thumbnail(
 ) -> Result<HttpResponse, GetCourse2ThumbnailError> {
     let course_id = path.into_inner();
     let course_id = ObjectId::with_string(&course_id)?;
-    let thumb = data.get_course2_thumbnail(course_id, query.into_inner())?;
+    let thumb = data
+        .get_course2_thumbnail(course_id, query.into_inner())
+        .await?;
     Ok(HttpResponse::Ok().content_type("image/jpeg").body(thumb))
 }
 
@@ -74,7 +76,7 @@ pub enum GetCourse2ThumbnailError {
     #[error("[GetCourse2ThumbnailError::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
     #[error("[GetCourse2ThumbnailError::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
+    Mongo(#[from] mongodb::error::Error),
     #[error("[GetCourse2ThumbnailError::Image]: {0}")]
     Image(#[from] image::ImageError),
 }

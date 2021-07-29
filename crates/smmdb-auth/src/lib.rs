@@ -11,7 +11,7 @@ pub use identity::*;
 pub use request::*;
 pub use response::*;
 
-use bson::{oid::ObjectId, ordered::OrderedDocument};
+use bson::{oid::ObjectId, Document};
 use chrono::offset::Utc;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::Serialize;
@@ -29,8 +29,8 @@ pub struct Account {
     permissions: Option<i32>,
 }
 
-impl From<OrderedDocument> for Account {
-    fn from(document: OrderedDocument) -> Account {
+impl From<Document> for Account {
+    fn from(document: Document) -> Account {
         Account {
             id: document
                 .get_object_id("_id")

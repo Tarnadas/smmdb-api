@@ -29,7 +29,7 @@ pub async fn post_meta(
         return Err(PostCourse2MetaError::Unauthorized);
     }
     let difficulty = meta.difficulty.clone();
-    data.post_course2_meta(course_id, difficulty)?;
+    data.post_course2_meta(course_id, difficulty).await?;
     Ok(NoContent)
 }
 
@@ -39,9 +39,9 @@ pub enum PostCourse2MetaError {
     #[error("[PutCourses2Error::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
     #[error("[PutCourses2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
-    #[error("[PutCourses2Error::MongoColl]: {0}")]
-    MongoColl(#[from] mongodb::coll::error::WriteException),
+    Mongo(#[from] mongodb::error::Error),
+    #[error("[PutCourses2Error::Anyhow]: {0}")]
+    Anyhow(#[from] anyhow::Error),
     #[error("[PutCourses2Error::Unauthorized]")]
     Unauthorized,
 }
@@ -55,9 +55,8 @@ impl ResponseError for PostCourse2MetaError {
             PostCourse2MetaError::MongoOid(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
-            PostCourse2MetaError::Mongo(_) => HttpResponse::new(StatusCode::NOT_FOUND),
-            PostCourse2MetaError::MongoColl(_) => {
-                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            PostCourse2MetaError::Mongo(_) | PostCourse2MetaError::Anyhow(_) => {
+                HttpResponse::new(StatusCode::NOT_FOUND)
             }
             PostCourse2MetaError::Unauthorized => HttpResponse::new(StatusCode::UNAUTHORIZED),
         };

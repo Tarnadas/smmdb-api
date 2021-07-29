@@ -20,7 +20,7 @@ async fn logout(data: web::Data<ServerData>, identity: Identity) -> Result<NoCon
 #[derive(Apiv2Schema, Debug, Error)]
 enum LogoutError {
     #[error("[LogoutError::Mongodb]: {0}")]
-    Mongodb(#[from] mongodb::Error),
+    Mongodb(#[from] mongodb::error::Error),
 }
 
 impl ResponseError for LogoutError {

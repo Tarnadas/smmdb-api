@@ -33,7 +33,8 @@ pub async fn vote_course(
     if body.value > 1 || body.value < -1 {
         return Err(VoteCourse2Error::BadValue(body.value));
     }
-    data.vote_course2(account.get_id().clone(), course_oid, body.value)?;
+    data.vote_course2(account.get_id().clone(), course_oid, body.value)
+        .await?;
     Ok(NoContent)
 }
 
@@ -43,7 +44,9 @@ pub enum VoteCourse2Error {
     #[error("[VoteCourse2Error::MongoOid]: {0}")]
     MongoOid(#[from] bson::oid::Error),
     #[error("[VoteCourse2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
+    Mongo(#[from] mongodb::error::Error),
+    #[error("[VoteCourse2Error::Anyhow]: {0}")]
+    Anyhow(#[from] anyhow::Error),
     #[error("[VoteCourse2Error::BadValue]: {0}")]
     BadValue(i32),
 }
@@ -52,7 +55,9 @@ impl ResponseError for VoteCourse2Error {
     fn error_response(&self) -> HttpResponse {
         let res = match *self {
             VoteCourse2Error::MongoOid(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
-            VoteCourse2Error::Mongo(_) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+            VoteCourse2Error::Mongo(_) | VoteCourse2Error::Anyhow(_) => {
+                HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            }
             VoteCourse2Error::BadValue(_) => HttpResponse::new(StatusCode::BAD_REQUEST),
         };
         res.set_body(Body::from(format!("{}", self)))

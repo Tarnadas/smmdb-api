@@ -4,7 +4,7 @@ pub use response::Course2Response;
 
 use crate::{Difficulty, MinHash, PermGen};
 
-use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use bson::{oid::ObjectId, Bson, Document};
 use chrono::offset::Utc;
 use serde::{Deserialize, Serialize};
 use smmdb_db::Database;
@@ -26,10 +26,10 @@ pub struct Course2 {
     hash: MinHash,
 }
 
-impl TryFrom<OrderedDocument> for Course2 {
+impl TryFrom<Document> for Course2 {
     type Error = serde_json::Error;
 
-    fn try_from(document: OrderedDocument) -> Result<Course2, Self::Error> {
+    fn try_from(document: Document) -> Result<Course2, Self::Error> {
         let course = Bson::from(document);
         let course: serde_json::Value = course.into();
         serde_json::from_value(course)
@@ -86,13 +86,16 @@ impl Course2 {
         self.votes
     }
 
-    pub fn get_own_vote(
+    pub async fn get_own_vote(
         &self,
         account_id: &ObjectId,
         course_id: &ObjectId,
         database: &Database,
     ) -> Option<i32> {
-        database.get_vote_for_account(account_id, course_id).ok()
+        database
+            .get_vote_for_account(account_id, course_id)
+            .await
+            .ok()
     }
 
     pub fn get_course(&self) -> &SMM2Course {

@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate anyhow;
+
 mod course;
 mod course2;
 mod difficulty;

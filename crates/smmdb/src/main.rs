@@ -1,4 +1,7 @@
 #[macro_use]
+extern crate anyhow;
+
+#[macro_use]
 extern crate bson;
 
 mod config;
@@ -20,8 +23,11 @@ async fn main() -> io::Result<()> {
     std::env::set_var("RUST_BACKTRACE", "1");
     use std::sync::Arc;
 
-    let database = Database::new();
+    let database = Database::new().await;
     let perm_gen = PermGen::new(128);
-    Migration::migrate(&database, &perm_gen);
-    Server::start(Arc::new(database), perm_gen).unwrap().await
+    Migration::migrate(&database, &perm_gen).await;
+    Server::start(Arc::new(database), perm_gen)
+        .await
+        .unwrap()
+        .await
 }

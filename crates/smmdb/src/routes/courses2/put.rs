@@ -37,7 +37,7 @@ pub async fn put_courses(
     match smmdb_lib::Course2::from_packed(&bytes[..]) {
         Ok(courses) => {
             let account = identity.get_account();
-            match data.put_courses2(courses, &account, query.difficulty) {
+            match data.put_courses2(courses, &account, query.difficulty).await {
                 Ok(res) => Ok(web::Json(res)),
                 Err(err) => Err(err),
             }
@@ -62,7 +62,7 @@ pub enum PutCourses2Error {
     #[error("[PutCourses2Error::ThumbnailMissing]")]
     ThumbnailMissing,
     #[error("[PutCourses2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
+    Mongo(#[from] mongodb::error::Error),
 }
 
 impl ResponseError for PutCourses2Error {

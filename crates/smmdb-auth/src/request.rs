@@ -1,6 +1,6 @@
 use crate::IdInfo;
 
-use bson::ordered::OrderedDocument;
+use bson::Document;
 use serde::Serialize;
 use std::convert::TryFrom;
 use thiserror::Error;
@@ -13,17 +13,17 @@ pub struct AccountReq {
 }
 
 impl AccountReq {
-    pub fn into_ordered_document(self) -> OrderedDocument {
+    pub fn into_ordered_document(self) -> Document {
         doc! {
-            "googleid" => self.googleid,
-            "username" => self.username,
-            "email" => self.email,
+            "googleid": self.googleid,
+            "username": self.username,
+            "email": self.email,
         }
     }
 
-    pub fn as_find(&self) -> OrderedDocument {
+    pub fn as_find(&self) -> Document {
         doc! {
-            "googleid" => self.googleid.clone()
+            "googleid": self.googleid.clone()
         }
     }
 }

@@ -4,7 +4,7 @@ use crate::{
 };
 
 use actix_web::{dev, error::ResponseError, http::StatusCode, HttpRequest, HttpResponse};
-use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use bson::{oid::ObjectId, Bson, Document, Regex};
 use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema, Mountable};
 use protobuf::ProtobufEnum;
 use serde::Deserialize;
@@ -24,7 +24,7 @@ async fn get_courses(
     query: QsQuery<GetCourses>,
     _req: HttpRequest,
 ) -> Result<String, GetCoursesError> {
-    data.get_courses(query.into_inner())
+    data.get_courses(query.into_inner()).await
 }
 
 #[derive(Apiv2Schema, Deserialize, Debug)]
@@ -60,31 +60,31 @@ pub struct GetCourses {
 }
 
 impl GetCourses {
-    pub fn into_ordered_document(
+    pub async fn into_ordered_document(
         self,
         database: &Database,
-    ) -> Result<Vec<OrderedDocument>, GetCoursesError> {
+    ) -> Result<Vec<Document>, GetCoursesError> {
         let mut pipeline = vec![];
 
-        if let Some(pipeline_match) = self.get_match(database)? {
-            pipeline.push(doc! { "$match" => pipeline_match });
+        if let Some(pipeline_match) = self.get_match(database).await? {
+            pipeline.push(doc! { "$match": pipeline_match });
         }
 
         let limit = self.get_limit()?;
         pipeline.push(doc! {
-            "$limit" => limit
+            "$limit": limit
         });
 
         if let Some(skip) = self.skip {
             pipeline.push(doc! {
-                "$skip" => skip
+                "$skip": skip
             });
         }
 
         Ok(pipeline)
     }
 
-    fn get_match(&self, database: &Database) -> Result<Option<OrderedDocument>, GetCoursesError> {
+    async fn get_match(&self, database: &Database) -> Result<Option<Document>, GetCoursesError> {
         let mut res = doc! {};
         if let Some(id) = &self.id {
             GetCourses::insert_objectid(&mut res, "_id".to_string(), id)?;
@@ -100,10 +100,10 @@ impl GetCourses {
                 })
                 .filter_map(Result::ok)
                 .collect();
-            res.insert_bson(
+            res.insert(
                 "_id".to_string(),
                 Bson::Document(doc! {
-                    "$in" => ids
+                    "$in": ids
                 }),
             );
         }
@@ -122,11 +122,14 @@ impl GetCourses {
 
         if let Some(uploader) = &self.uploader {
             let filter = doc! {
-                "username" => Bson::RegExp(format!("^{}$", uploader), "i".to_string())
+                "username": Bson::RegularExpression(Regex {
+                    pattern: format!("^{}$", uploader),
+                    options: "i".to_string()
+                })
             };
-            match Data::find_account(database, filter) {
+            match Data::find_account(database, filter).await {
                 Some(account) => {
-                    res.insert_bson(
+                    res.insert(
                         "owner".to_string(),
                         Bson::ObjectId(account.get_id().clone()),
                     );
@@ -170,7 +173,7 @@ impl GetCourses {
         );
 
         if let Some(nintendo_id) = &self.nintendo_id {
-            res.insert_bson("nintendoid".to_string(), Bson::String(nintendo_id.clone()));
+            res.insert("nintendoid".to_string(), Bson::String(nintendo_id.clone()));
         }
 
         GetCourses::insert_boundaries(
@@ -205,19 +208,18 @@ impl GetCourses {
         Ok(limit + self.skip.unwrap_or_default())
     }
 
-    fn insert_regexp(doc: &mut OrderedDocument, key: String, regexp: String) {
-        doc.insert_bson(
+    fn insert_regexp(doc: &mut Document, key: String, regexp: String) {
+        doc.insert(
             key,
-            Bson::RegExp(format!(".*{}.*", regexp), "i".to_string()),
+            Bson::RegularExpression(Regex {
+                pattern: format!(".*{}.*", regexp),
+                options: "i".to_string(),
+            }),
         );
     }
 
-    fn insert_objectid(
-        doc: &mut OrderedDocument,
-        key: String,
-        oid: &str,
-    ) -> Result<(), GetCoursesError> {
-        doc.insert_bson(
+    fn insert_objectid(doc: &mut Document, key: String, oid: &str) -> Result<(), GetCoursesError> {
+        doc.insert(
             key.clone(),
             Bson::ObjectId(
                 ObjectId::with_string(oid).map_err(|_| GetCoursesError::Deserialize(key))?,
@@ -226,29 +228,24 @@ impl GetCourses {
         Ok(())
     }
 
-    fn insert_enum<T>(doc: &mut OrderedDocument, key: String, enums: &[T])
+    fn insert_enum<T>(doc: &mut Document, key: String, enums: &[T])
     where
         T: ProtobufEnum,
     {
-        let enums: Vec<Bson> = enums.iter().map(|val| Bson::I32(val.value())).collect();
-        doc.insert_bson(
+        let enums: Vec<Bson> = enums.iter().map(|val| Bson::Int32(val.value())).collect();
+        doc.insert(
             key,
             Bson::Document(doc! {
-                "$in" => enums
+                "$in": enums
             }),
         );
     }
 
-    fn insert_boundaries(
-        doc: &mut OrderedDocument,
-        key: String,
-        gte: Option<i32>,
-        lte: Option<i32>,
-    ) {
+    fn insert_boundaries(doc: &mut Document, key: String, gte: Option<i32>, lte: Option<i32>) {
         let mut boundaries = None;
         if let Some(gte) = gte {
             boundaries = Some(doc! {
-                "$gte" => gte
+                "$gte": gte
             });
         }
         if let Some(lte) = lte {
@@ -258,13 +255,13 @@ impl GetCourses {
                 }
                 None => {
                     boundaries = Some(doc! {
-                        "$lte" => lte
+                        "$lte": lte
                     })
                 }
             }
         }
         if let Some(boundaries) = boundaries {
-            doc.insert_bson(key, Bson::Document(boundaries));
+            doc.insert(key, Bson::Document(boundaries));
         }
     }
 }

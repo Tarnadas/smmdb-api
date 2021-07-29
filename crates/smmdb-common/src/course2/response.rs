@@ -36,7 +36,7 @@ impl TypedData for SMM2CourseWrap {
 }
 
 impl Course2Response {
-    pub fn from_course(
+    pub async fn from_course(
         course: Course2,
         account: &Account,
         own_account: Option<&Account>,
@@ -51,7 +51,9 @@ impl Course2Response {
             uploaded: course.get_uploaded(),
             votes: course.get_votes(),
             own_vote: if let Some(own_account) = own_account {
-                course.get_own_vote(own_account.get_id(), course.get_id(), database)
+                course
+                    .get_own_vote(own_account.get_id(), course.get_id(), database)
+                    .await
             } else {
                 None
             },

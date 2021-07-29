@@ -5,7 +5,8 @@ authors = ["Mario Reder <mreder1289@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bson = "0.14"
+anyhow = "1"
+bson = "1"
 chrono = "0.4"
 paperclip = { version = "0.5", features = ["actix-nightly", "serde_qs"] }
 serde = "1"

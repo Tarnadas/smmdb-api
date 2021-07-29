@@ -9,14 +9,15 @@ actix-cors = "0.5"
 actix-http = { version = "2", features = [ "rustls" ] }
 actix-session = "0.4"
 actix-web = "3"
+anyhow = "1"
 awc = "2"
 brotli2 = "0.3"
-bson = "0.14"
+bson = "1"
 env_logger = "0.8"
 flate2 = "1"
 futures = "0.3"
 image = "0.23"
-mongodb = { package = "mongodb_cwal", version = "0.6" }
+mongodb = "1"
 num_cpus = "1"
 paperclip = { version = "0.5", features = ["actix-nightly", "actix-session", "serde_qs"] }
 parking_lot = "0.11"

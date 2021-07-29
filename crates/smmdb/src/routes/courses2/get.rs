@@ -4,7 +4,7 @@ use crate::{
 };
 
 use actix_web::{error::ResponseError, http::StatusCode, Error, HttpResponse};
-use bson::{oid::ObjectId, ordered::OrderedDocument, Bson};
+use bson::{oid::ObjectId, Bson, Document, Regex};
 use paperclip::actix::{api_v2_errors, api_v2_operation, web, Apiv2Schema};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_qs::actix::QsQuery;
@@ -22,10 +22,12 @@ pub async fn get_courses(
     query: QsQuery<GetCourses2>,
     identity: Option<Identity>,
 ) -> Result<web::Json<Vec<Course2Response>>, GetCourses2Error> {
-    let res = data.get_courses2(
-        query.into_inner(),
-        identity.map(|identity| identity.get_account()),
-    )?;
+    let res = data
+        .get_courses2(
+            query.into_inner(),
+            identity.map(|identity| identity.get_account()),
+        )
+        .await?;
     Ok(web::Json(res))
 }
 
@@ -54,33 +56,33 @@ pub struct GetCourses2 {
 }
 
 impl GetCourses2 {
-    pub fn into_ordered_document(
+    pub async fn into_ordered_document(
         self,
         database: &Database,
-    ) -> Result<Vec<OrderedDocument>, GetCourses2Error> {
+    ) -> Result<Vec<Document>, GetCourses2Error> {
         let mut pipeline = vec![];
 
-        if let Some(pipeline_match) = self.get_match(database)? {
-            pipeline.push(doc! { "$match" => pipeline_match });
+        if let Some(pipeline_match) = self.get_match(database).await? {
+            pipeline.push(doc! { "$match": pipeline_match });
         }
 
         pipeline.push(self.get_sort_doc());
 
         let limit = self.get_limit();
         pipeline.push(doc! {
-            "$limit" => limit
+            "$limit": limit
         });
 
         if let Some(skip) = self.skip {
             pipeline.push(doc! {
-                "$skip" => skip
+                "$skip": skip
             });
         }
 
         Ok(pipeline)
     }
 
-    fn get_match(&self, database: &Database) -> Result<Option<OrderedDocument>, GetCourses2Error> {
+    async fn get_match(&self, database: &Database) -> Result<Option<Document>, GetCourses2Error> {
         let mut res = doc! {};
         if let Some(id) = &self.id {
             GetCourses2::insert_objectid(&mut res, "_id".to_string(), id)?;
@@ -96,10 +98,10 @@ impl GetCourses2 {
                 })
                 .filter_map(Result::ok)
                 .collect();
-            res.insert_bson(
+            res.insert(
                 "_id".to_string(),
                 Bson::Document(doc! {
-                    "$in" => ids
+                    "$in": ids
                 }),
             );
         }
@@ -121,11 +123,14 @@ impl GetCourses2 {
 
         if let Some(uploader) = &self.uploader {
             let filter = doc! {
-                "username" => Bson::RegExp(format!("^{}$", uploader), "i".to_string())
+                "username": Bson::RegularExpression(Regex {
+                    pattern: format!("^{}$", uploader),
+                    options: "i".to_string()
+                })
             };
-            match Data::find_account(database, filter) {
+            match Data::find_account(database, filter).await {
                 Some(account) => {
-                    res.insert_bson(
+                    res.insert(
                         "owner".to_string(),
                         Bson::ObjectId(account.get_id().clone()),
                     );
@@ -145,14 +150,14 @@ impl GetCourses2 {
         }
     }
 
-    fn get_sort_doc(&self) -> OrderedDocument {
-        let mut query = OrderedDocument::new();
+    fn get_sort_doc(&self) -> Document {
+        let mut query = Document::new();
         for sort in self.get_sort() {
             let sort_dir: String = sort.val.try_into().unwrap_or_default();
             query.insert(sort_dir, sort.dir);
         }
         doc! {
-            "$sort" => query
+            "$sort": query
         }
     }
 
@@ -180,7 +185,7 @@ impl GetCourses2 {
     }
 
     fn insert_str_match(
-        doc: &mut OrderedDocument,
+        doc: &mut Document,
         key: String,
         val: String,
         exact: bool,
@@ -201,15 +206,17 @@ impl GetCourses2 {
         } else {
             "i".to_string()
         };
-        doc.insert_bson(key, Bson::RegExp(matched_str, options_str));
+        doc.insert(
+            key,
+            Bson::RegularExpression(Regex {
+                pattern: matched_str,
+                options: options_str,
+            }),
+        );
     }
 
-    fn insert_objectid(
-        doc: &mut OrderedDocument,
-        key: String,
-        oid: &str,
-    ) -> Result<(), GetCourses2Error> {
-        doc.insert_bson(
+    fn insert_objectid(doc: &mut Document, key: String, oid: &str) -> Result<(), GetCourses2Error> {
+        doc.insert(
             key.clone(),
             Bson::ObjectId(
                 ObjectId::with_string(oid).map_err(|_| GetCourses2Error::Deserialize(key))?,
@@ -323,7 +330,7 @@ pub enum GetCourses2Error {
     #[error("[GetCourses2Error::SerdeJson]: {0}")]
     SerdeJson(#[from] serde_json::Error),
     #[error("[GetCourses2Error::Mongo]: {0}")]
-    Mongo(#[from] mongodb::Error),
+    Mongo(#[from] mongodb::error::Error),
 }
 
 impl ResponseError for GetCourses2Error {

@@ -24,11 +24,14 @@ pub use data::*;
 pub struct Server;
 
 impl Server {
-    pub fn start(database: Arc<Database>, perm_gen: PermGen) -> Result<ActixServer, io::Error> {
+    pub async fn start(
+        database: Arc<Database>,
+        perm_gen: PermGen,
+    ) -> Result<ActixServer, io::Error> {
         println!("Starting SMMDB API server");
         std::env::set_var("RUST_LOG", "actix_web=debug");
         env_logger::init();
-        let data = Arc::new(Data::new(database, perm_gen));
+        let data = Arc::new(Data::new(database, perm_gen).await);
 
         Ok(HttpServer::new(move || {
             let spec = DefaultApiRaw {
