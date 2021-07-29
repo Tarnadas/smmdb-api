@@ -9,5 +9,5 @@ brotli2 = "0.3"
 bson = "0.14"
 mongodb = { package = "mongodb_cwal", version = "0.6" }
 serde_json = "1"
-smmdb-lib = { version = "2", package = "smmdb", git = "https://github.com/Tarnadas/smmdb-lib.git" }
+smmdb-lib = { version = "2", package = "smmdb", git = "https://github.com/Tarnadas/smmdb-lib.git", rev = "f533b2a0ecdbe4ebc763c1d9eb0abf1d5b541e7d" }
 thiserror = "1"

@@ -12,5 +12,5 @@ serde = "1"
 serde_json = "1"
 smmdb-auth = { path = "../smmdb-auth" }
 smmdb-db = { path = "../smmdb-db" }
-smmdb-lib = { version = "2", package = "smmdb", git = "https://github.com/Tarnadas/smmdb-lib.git" }
+smmdb-lib = { version = "2", package = "smmdb", git = "https://github.com/Tarnadas/smmdb-lib.git", rev = "f533b2a0ecdbe4ebc763c1d9eb0abf1d5b541e7d" }
 twox-hash = "1"
