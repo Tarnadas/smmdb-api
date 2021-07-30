@@ -3,6 +3,11 @@ name: Publish
 on:
   push:
     branches: [master]
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "crates/**/*"
+      - "rust-toolchain"
 
 jobs:
   publish:
