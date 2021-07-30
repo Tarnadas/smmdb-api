@@ -162,10 +162,9 @@ impl GetCourses2 {
         } else {
             vec![Sort::default()]
         };
-        if res
+        if !res
             .iter()
-            .find(|sort| sort.val == SortValue::CourseHeaderTitle)
-            .is_none()
+            .any(|sort| sort.val == SortValue::CourseHeaderTitle)
         {
             res.push(Sort {
                 val: SortValue::CourseHeaderTitle,
