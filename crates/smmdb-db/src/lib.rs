@@ -44,8 +44,7 @@ impl Database {
     pub fn new() -> Self {
         let mongodb_uri = env::var("MONGODB_URI").unwrap();
         println!("Connecting to MongoDB at {}", mongodb_uri);
-        let client = Client::with_uri(&mongodb_uri)
-            .expect("Failed to connect to MongoDB");
+        let client = Client::with_uri(&mongodb_uri).expect("Failed to connect to MongoDB");
         let courses = client.db("admin").collection(Collections::Courses.as_str());
         let _course_data = client
             .db("admin")

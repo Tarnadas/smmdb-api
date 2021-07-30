@@ -2,7 +2,12 @@ use crate::server::ServerData;
 
 // use actix_service::{Service, Transform};
 use actix_session::{Session, UserSession};
-use actix_web::{Error, dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform}, http::header, web::Data};
+use actix_web::{
+    dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform},
+    http::header,
+    web::Data,
+    Error,
+};
 use bson::{oid::ObjectId, ordered::OrderedDocument};
 use futures::future::{ok, Future, Ready};
 use smmdb_auth::{AuthSession, Identity};
