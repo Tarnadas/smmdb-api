@@ -8,3 +8,11 @@ API server for [SMMDB](https://smmdb.net).
 
 The API's documentation can be visited here: https://api.smmdb.net
 Please keep in mind, that it is not yet well documented and I am waiting for a way to do this automatically from code.
+
+## Self-hosting
+
+The original SMMDB site is shut down, so all runtime configuration is environment-driven
+(`MONGODB_URI`, `GOOGLE_CLIENT_ID`, `COOKIE_SECRET`, `PORT`). See
+[`docs/SELFHOSTING.md`](docs/SELFHOSTING.md) for full instructions, including how to
+sanitize a shared backup of the original database (`accounts` and `amazon` collections
+contain personal data and embedded AWS keys and are dropped).

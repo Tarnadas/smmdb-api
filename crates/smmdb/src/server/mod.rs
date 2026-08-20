@@ -30,6 +30,14 @@ impl Server {
         env_logger::init();
         let data = Arc::new(Data::new(database, perm_gen));
 
+        let cookie_secret: &'static [u8] = Box::leak(
+            std::env::var("COOKIE_SECRET")
+                .unwrap_or_default()
+                .into_bytes()
+                .into_boxed_slice(),
+        );
+        let bind_addr = std::env::var("PORT").unwrap_or_else(|_| "3030".to_string());
+
         Ok(HttpServer::new(move || {
             let spec = DefaultApiRaw {
                 tags: vec![Tag {
@@ -54,8 +62,6 @@ impl Server {
 [![Twitter](https://img.shields.io/twitter/follow/marior_dev?style=flat&logo=twitter&label=follow&color=00acee)](https://twitter.com/marior_dev)
 
 A cross console/emulator sharing platform for Super Mario Maker courses to rule them all.
-
-## [Website](https://smmdb.net)
 
 ## [Cemu SMMDB](https://github.com/tarnadas/cemu-smmdb)
 
@@ -112,7 +118,7 @@ Chocolatey install instructions/docs [Chocolatey.org](https://chocolatey.org/ins
                 .with_json_spec_at("/api/spec")
                 .wrap(Auth)
                 .wrap(
-                    CookieSession::signed(&[0; 32])
+                    CookieSession::signed(cookie_secret)
                         .name("smmdb")
                         .path("/")
                         .max_age(3600 * 24 * 7)
@@ -123,7 +129,7 @@ Chocolatey install instructions/docs [Chocolatey.org](https://chocolatey.org/ins
                 .wrap(Logger::default())
                 .build()
         })
-        .bind("0.0.0.0:3030")?
+            .bind(format!("0.0.0.0:{}", bind_addr))?
         .workers(num_cpus::get())
         .run())
     }

@@ -1,5 +1,5 @@
 use crate::{
-    config::GOOGLE_CLIENT_ID,
+    config::get_google_client_id,
     routes::{
         courses,
         courses2::{
@@ -38,7 +38,7 @@ const SIMILARITY_THRESHOLD: f64 = 0.95;
 
 pub struct Data {
     database: Arc<Database>,
-    pub google_client_id: &'static str,
+    pub google_client_id: String,
     pub perm_gen: PermGen,
     pub lsh_index: Arc<Mutex<LshIndex>>,
 }
@@ -53,7 +53,7 @@ impl Data {
         println!("Filling LshIndex completed!");
         Data {
             database,
-            google_client_id: GOOGLE_CLIENT_ID,
+            google_client_id: get_google_client_id(),
             perm_gen,
             lsh_index: Arc::new(Mutex::new(lsh_index)),
         }

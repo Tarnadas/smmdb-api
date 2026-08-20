@@ -1,6 +1,19 @@
 version: "3.6"
 services:
   api:
-    image: tarnadas/smmdb-api
+    build: .
     ports:
       - "127.0.0.1:3030:3030"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/admin
+      - GOOGLE_CLIENT_ID=
+      - COOKIE_SECRET=
+      - PORT=3030
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo:3.4
+    volumes:
+      - mongo-data:/data/db
+volumes:
+  mongo-data:

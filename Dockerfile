@@ -1,6 +1,73 @@
+FROM debian:stretch-slim AS build
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN set -eux; \
+    sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list; \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gcc \
+    libc6-dev \
+    wget \
+    pkg-config \
+    openssl \
+    libssl-dev \
+    ; \
+    url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
+    wget "$url"; \
+    chmod +x rustup-init; \
+    ./rustup-init -y --no-modify-path --default-toolchain nightly-2021-04-25 --profile minimal; \
+    rm rustup-init; \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    apt-get remove -y --auto-remove \
+    wget \
+    ; \
+    rm -rf /var/lib/apt/lists/*;
+
+WORKDIR /smmdb
+
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./crates/smmdb/Cargo.toml ./crates/smmdb/Cargo.toml
+COPY ./crates/smmdb-auth/Cargo.toml ./crates/smmdb-auth/Cargo.toml
+COPY ./crates/smmdb-common/Cargo.toml ./crates/smmdb-common/Cargo.toml
+COPY ./crates/smmdb-db/Cargo.toml ./crates/smmdb-db/Cargo.toml
+
+RUN mkdir -p ./crates/smmdb/src && \
+    echo "fn main() {}" > ./crates/smmdb/src/main.rs && \
+    mkdir -p ./crates/smmdb-auth/src && \
+    touch ./crates/smmdb-auth/src/lib.rs && \
+    mkdir -p ./crates/smmdb-common/src && \
+    touch ./crates/smmdb-common/src/lib.rs && \
+    mkdir -p ./crates/smmdb-db/src && \
+    touch ./crates/smmdb-db/src/lib.rs
+
+RUN cargo fetch
+RUN cargo build --release
+
+RUN rm ./crates/smmdb/src/*.rs && \
+    rm ./crates/smmdb-auth/src/*.rs && \
+    rm ./crates/smmdb-common/src/*.rs && \
+    rm ./crates/smmdb-db/src/*.rs
+
+COPY . .
+
+RUN rm ./target/release/deps/smmdb* && \
+    rm -r ./target/release/.fingerprint/smmdb*
+RUN cargo build --release
+
+RUN mv /smmdb/target/release/smmdb /binary
+RUN rm -rf /smmdb
+
 FROM debian:buster-slim
 
 RUN set -eux; \
+    sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list; \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
     pkg-config \
@@ -8,10 +75,9 @@ RUN set -eux; \
     libssl-dev \
     iproute2 \
     ; \
-    \
     rm -rf /var/lib/apt/lists/*;
 
-COPY --from=tarnadas/smmdb-api-build /binary ./smmdb
+COPY --from=build /binary ./smmdb
 
 EXPOSE 3030
 

@@ -3,8 +3,9 @@ use std::{
     str::from_utf8,
 };
 
-pub static GOOGLE_CLIENT_ID: &str =
-    "899493559187-bnvgqj1i8cnph7ilkl4h261836skee25.apps.googleusercontent.com";
+pub fn get_google_client_id() -> String {
+    std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default()
+}
 
 pub fn _get_gateway_ip() -> String {
     let ip = match Command::new("ip")
