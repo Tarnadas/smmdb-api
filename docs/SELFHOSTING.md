@@ -65,6 +65,13 @@ cargo run
 
 ## Importing course data
 
+A pre-sanitized copy of the final production dump (all courses, no user data) is
+available for download:
+
+**https://drive.proton.me/urls/6TF4JYA5QW#pFLyVy6mmCjG**
+
+(`backup-sanitized.7z`, ~25 GiB — extract it and restore the contained `admin/` dump.)
+
 Restore a dump **before** starting the API:
 
 ```
